@@ -1,0 +1,7 @@
+/* frontend/src/stylesindex.css */
+
+/* Cap Mantine Select / MultiSelect / Autocomplete dropdown height globally */
+.mantine-Combobox-dropdown {
+  max-height: 280px;
+  overflow-y: auto;
+}
