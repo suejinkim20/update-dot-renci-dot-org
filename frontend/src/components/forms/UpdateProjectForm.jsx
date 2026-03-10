@@ -11,22 +11,14 @@ import {
   Title,
   Divider,
   Select,
-  Modal,
   ActionIcon,
-  Anchor,
   Alert,
   Paper,
-  Badge,
-  TextInput as MantineTextInput,
-} from '@mantine/core';
-import {
-  IconEye,
-  IconPlus,
-  IconTrash,
-  IconX,
-} from '@tabler/icons-react';
-import {
   TextInput,
+} from '@mantine/core';
+import { IconEye, IconPlus, IconTrash } from '@tabler/icons-react';
+import {
+  TextInput as RenciTextInput,
   LongTextInput,
   AutocompleteField,
   TagsInput,
@@ -35,6 +27,10 @@ import {
 import SubmitterEmailField from '../form-components/SubmitterEmailField';
 import SlugConfirmation from '../form-components/SlugConfirmation';
 import FormSuccessState from '../form-components/FormSuccessState';
+import CurrentDataModal from '../form-components/CurrentDataModal';
+import EditableWebsiteList from '../form-components/EditableWebsiteList';
+import RelationalFieldEditor from '../form-components/RelationalFieldEditor';
+import SectionLabel from '../form-components/SectionLabel';
 import { useProjects } from '../../hooks/useProjects';
 import { useGroups } from '../../hooks/useGroups';
 import { usePeople } from '../../hooks/usePeople';
@@ -76,46 +72,24 @@ function buildGroupOptions(groups, excludeSlug = null) {
   return [...research, ...ops];
 }
 
-function SectionLabel({ children }) {
+function OrgMiniForm({ index, value = {}, onChange, onRemove, showRemove }) {
+  const update = (field, val) => onChange({ ...value, [field]: val });
   return (
-    <Text size="xs" fw={500} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.04em' }}>
-      {children}
-    </Text>
-  );
-}
-
-function RemovePills({ currentItems = [], value = [], onChange, emptyMessage }) {
-  const markedSlugs = new Set(value);
-  const toggle = (slug) => {
-    const next = markedSlugs.has(slug) ? value.filter((s) => s !== slug) : [...value, slug];
-    onChange(next);
-  };
-  if (currentItems.length === 0) {
-    return <Text size="sm" c="dimmed">{emptyMessage ?? 'None currently listed.'}</Text>;
-  }
-  return (
-    <Group gap="xs" wrap="wrap">
-      {[...currentItems].sort((a, b) => a.name.localeCompare(b.name)).map((item) => {
-        const marked = markedSlugs.has(item.slug);
-        return (
-          <Badge
-            key={item.slug}
-            variant={marked ? 'filled' : 'light'}
-            color={marked ? 'red' : 'gray'}
-            size="lg"
-            style={{ cursor: 'pointer', textDecoration: marked ? 'line-through' : 'none', userSelect: 'none' }}
-            rightSection={
-              <ActionIcon size="xs" color={marked ? 'red' : 'gray'} variant="transparent">
-                <IconX size={10} />
-              </ActionIcon>
-            }
-            onClick={() => toggle(item.slug)}
-          >
-            {item.name}
-          </Badge>
-        );
-      })}
-    </Group>
+    <Paper withBorder p="sm" radius="sm">
+      <Stack gap="xs">
+        <Group justify="space-between" align="center">
+          <Text size="xs" fw={500} c="dimmed">New organization {index + 1}</Text>
+          {showRemove && (
+            <ActionIcon size="sm" color="red" variant="subtle" onClick={onRemove}>
+              <IconTrash size={14} />
+            </ActionIcon>
+          )}
+        </Group>
+        <TextInput label="Official name" placeholder="National Institutes of Health" required size="sm" value={value.officialName || ''} onChange={(e) => update('officialName', e.target.value)} />
+        <TextInput label="Short name / acronym" placeholder="NIH" size="sm" value={value.shortName || ''} onChange={(e) => update('shortName', e.target.value)} />
+        <TextInput label="Website URL" placeholder="https://nih.gov" size="sm" value={value.url || ''} onChange={(e) => update('url', e.target.value)} />
+      </Stack>
+    </Paper>
   );
 }
 
@@ -127,42 +101,23 @@ function EditContributors({ currentItems = [], allItems = [], value, onChange })
   const available   = allItems.filter((i) => !existingSlugs.has(i.slug));
 
   return (
-    <Stack gap="md">
-      <Box>
-        <Group justify="space-between" align="baseline" mb={6}>
-          <SectionLabel>Current contributors</SectionLabel>
-          {removeValue.length > 0 && <Text size="xs" c="red">{removeValue.length} marked for removal</Text>}
-        </Group>
-        <RemovePills currentItems={currentItems} value={removeValue} onChange={(slugs) => notify({ remove: slugs })} emptyMessage="No contributors currently listed." />
-      </Box>
-      <Divider variant="dashed" />
-      <Box>
-        <Group justify="space-between" align="baseline" mb={6}>
-          <SectionLabel>Add contributors</SectionLabel>
-          {addValue.length > 0 && <Text size="xs" c="teal">{addValue.length} to be added</Text>}
-        </Group>
-        <TagsInput data={available} value={addValue} onChange={(vals) => notify({ add: vals })} helperText="Search by name. Free text accepted if no match found." />
-      </Box>
-    </Stack>
-  );
-}
-
-function OrgMiniForm({ index, value = {}, onChange, onRemove, showRemove }) {
-  const update = (field, val) => onChange({ ...value, [field]: val });
-  return (
-    <Paper withBorder p="sm" radius="sm">
-      <Stack gap="xs">
-        <Group justify="space-between" align="center">
-          <Text size="xs" fw={500} c="dimmed">New organization {index + 1}</Text>
-          {showRemove && (
-            <ActionIcon size="sm" color="red" variant="subtle" onClick={onRemove}><IconTrash size={14} /></ActionIcon>
-          )}
-        </Group>
-        <MantineTextInput label="Official name" placeholder="National Institutes of Health" required size="sm" value={value.officialName || ''} onChange={(e) => update('officialName', e.target.value)} />
-        <MantineTextInput label="Short name / acronym" placeholder="NIH" size="sm" value={value.shortName || ''} onChange={(e) => update('shortName', e.target.value)} />
-        <MantineTextInput label="Website URL" placeholder="https://nih.gov" size="sm" value={value.url || ''} onChange={(e) => update('url', e.target.value)} />
-      </Stack>
-    </Paper>
+    <RelationalFieldEditor
+      currentLabel="Current contributors"
+      addLabel="Add contributors"
+      currentItems={currentItems}
+      removeValue={removeValue}
+      onRemoveChange={(slugs) => notify({ remove: slugs })}
+      emptyMessage="No contributors currently listed."
+      addCount={addValue.length}
+      addPanel={
+        <TagsInput
+          data={available}
+          value={addValue}
+          onChange={(vals) => notify({ add: vals })}
+          helperText="Search by name. Free text accepted if no match found."
+        />
+      }
+    />
   );
 }
 
@@ -172,80 +127,39 @@ function EditOrganizations({ currentItems = [], value, onChange, noun = 'organiz
   const notify      = (patch) => onChange({ add: addValue, remove: removeValue, ...patch });
   const updateOrgAt = (idx, updated) => notify({ add: addValue.map((o, i) => (i === idx ? updated : o)) });
   const addAnother  = () => notify({ add: [...addValue, {}] });
-  const removeOrgAt = (idx) => { const next = addValue.filter((_, i) => i !== idx); notify({ add: next.length > 0 ? next : [{}] }); };
+  const removeOrgAt = (idx) => {
+    const next = addValue.filter((_, i) => i !== idx);
+    notify({ add: next.length > 0 ? next : [{}] });
+  };
   const filledCount = addValue.filter((o) => o.officialName?.trim()).length;
 
   return (
-    <Stack gap="md">
-      <Box>
-        <Group justify="space-between" align="baseline" mb={6}>
-          <SectionLabel>Current {noun}s</SectionLabel>
-          {removeValue.length > 0 && <Text size="xs" c="red">{removeValue.length} marked for removal</Text>}
-        </Group>
-        <RemovePills currentItems={currentItems} value={removeValue} onChange={(slugs) => notify({ remove: slugs })} emptyMessage={`No ${noun}s currently listed.`} />
-      </Box>
-      <Divider variant="dashed" />
-      <Box>
-        <Group justify="space-between" align="baseline" mb={6}>
-          <SectionLabel>Add {noun}s</SectionLabel>
-          {filledCount > 0 && <Text size="xs" c="teal">{filledCount} to be added</Text>}
-        </Group>
+    <RelationalFieldEditor
+      currentLabel={`Current ${noun}s`}
+      addLabel={`Add ${noun}s`}
+      currentItems={currentItems}
+      removeValue={removeValue}
+      onRemoveChange={(slugs) => notify({ remove: slugs })}
+      emptyMessage={`No ${noun}s currently listed.`}
+      addCount={filledCount}
+      addPanel={
         <Stack gap="sm">
           {addValue.map((org, idx) => (
-            <OrgMiniForm key={idx} index={idx} value={org} onChange={(updated) => updateOrgAt(idx, updated)} onRemove={() => removeOrgAt(idx)} showRemove={addValue.length > 1} />
+            <OrgMiniForm
+              key={idx}
+              index={idx}
+              value={org}
+              onChange={(updated) => updateOrgAt(idx, updated)}
+              onRemove={() => removeOrgAt(idx)}
+              showRemove={addValue.length > 1}
+            />
           ))}
           <Button variant="subtle" size="xs" leftSection={<IconPlus size={14} />} onClick={addAnother} style={{ alignSelf: 'flex-start' }}>
             Add another {noun}
           </Button>
         </Stack>
-      </Box>
-    </Stack>
-  );
-}
-
-function EditableWebsiteList({ currentItems = [], value, onChange }) {
-  const [items, setItems] = useState(() =>
-    value?.length ? value : currentItems.map((w) => ({ ...w, _status: 'included' }))
-  );
-  const notify = (next) => {
-    setItems(next);
-    onChange({
-      keep:   next.filter((i) => i._status === 'included').map(({ _status, ...r }) => r),
-      remove: next.filter((i) => i._status === 'removed').map(({ _status, ...r }) => r),
-      add:    next.filter((i) => i._status === 'added').map(({ _status, ...r }) => r),
-    });
-  };
-  const toggle = (idx) => notify(items.map((item, i) => {
-    if (i !== idx) return item;
-    if (item._status === 'included') return { ...item, _status: 'removed' };
-    if (item._status === 'removed')  return { ...item, _status: 'included' };
-    if (item._status === 'added')    return { ...item, _status: 'removed' };
-    return item;
-  }));
-  const updateField = (idx, field, val) => notify(items.map((item, i) => (i === idx ? { ...item, [field]: val } : item)));
-  const addRow = () => notify([...items, { url: '', label: '', _status: 'added' }]);
-
-  return (
-    <Stack gap="sm">
-      {items.length > 0 && (
-        <Stack gap="xs">
-          {items.map((item, idx) => {
-            const isRemoved = item._status === 'removed';
-            const isNew     = item._status === 'added';
-            return (
-              <Group key={idx} gap="xs" align="flex-end" wrap="nowrap">
-                <ActionIcon size="sm" variant="subtle" color={isRemoved ? 'red' : isNew ? 'teal' : 'gray'} onClick={() => toggle(idx)} mb={4}>
-                  <IconX size={14} style={{ opacity: isRemoved ? 1 : 0.35 }} />
-                </ActionIcon>
-                <MantineTextInput placeholder="https://..." value={item.url || ''} onChange={(e) => updateField(idx, 'url', e.target.value)} disabled={isRemoved} style={{ flex: 2 }} size="sm" label={idx === 0 ? 'URL' : undefined} />
-                <MantineTextInput placeholder="Label (optional)" value={item.label || ''} onChange={(e) => updateField(idx, 'label', e.target.value)} disabled={isRemoved} style={{ flex: 1 }} size="sm" label={idx === 0 ? 'Label' : undefined} />
-              </Group>
-            );
-          })}
-        </Stack>
-      )}
-      <Button variant="subtle" size="xs" leftSection={<IconPlus size={14} />} onClick={addRow} style={{ alignSelf: 'flex-start' }}>Add website</Button>
-    </Stack>
+      }
+    />
   );
 }
 
@@ -257,7 +171,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedProject, people, o
         <Stack gap="xs">
           {selectedProject?.name && <ReadOnlyField label="Current Name" value={selectedProject.name} />}
           <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New name is required' }} render={({ field, fieldState }) => (
-            <TextInput {...field} label="New Name" required error={fieldState.error?.message} />
+            <RenciTextInput {...field} label="New Name" required error={fieldState.error?.message} />
           )} />
         </Stack>
       );
@@ -284,7 +198,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedProject, people, o
         <Stack gap="xs">
           {selectedProject?.renciRole && <ReadOnlyField label="Current RENCI Role" value={selectedProject.renciRole} />}
           <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New RENCI Role is required' }} render={({ field, fieldState }) => (
-            <TextInput {...field} label="New RENCI Role" required error={fieldState.error?.message} />
+            <RenciTextInput {...field} label="New RENCI Role" required error={fieldState.error?.message} />
           )} />
         </Stack>
       );
@@ -321,34 +235,6 @@ function ChangeBlockInput({ fieldKey, control, index, selectedProject, people, o
     default:
       return null;
   }
-}
-
-function CurrentDataModal({ opened, onClose, project }) {
-  if (!project) return null;
-  const fields = [
-    { label: 'Name',                  value: project.name },
-    { label: 'Slug',                  value: project.slug },
-    { label: 'Active',                value: project.active === true ? 'Yes' : project.active === false ? 'No' : null },
-    { label: 'Description',           value: project.description },
-    { label: "RENCI's Role",          value: project.renciRole },
-    { label: 'Owning Group',          value: project.owningGroup?.label ?? project.owningGroup?.name },
-    { label: 'Contributors',          value: project.people?.length ? [...project.people].sort((a, b) => a.name.localeCompare(b.name)).map((p) => p.name).join(', ') : null },
-    { label: 'Funding Organizations', value: project.fundingOrgs?.length ? project.fundingOrgs.map((o) => o.name).join(', ') : null },
-    { label: 'Partner Organizations', value: project.partnerOrgs?.length ? project.partnerOrgs.map((o) => o.name).join(', ') : null },
-    { label: 'Websites',              value: project.websites?.length ? project.websites.map((w) => w.label ? `${w.label}: ${w.url}` : w.url).join(', ') : null },
-  ];
-  return (
-    <Modal opened={opened} onClose={onClose} title={`Current data: ${project.name}`} size="lg">
-      <Stack gap="sm">
-        {fields.map(({ label, value }) => (
-          <Box key={label}>
-            <Text size="xs" c="dimmed" fw={500} tt="uppercase" lts={0.5}>{label}</Text>
-            <Text size="sm">{value || '—'}</Text>
-          </Box>
-        ))}
-      </Stack>
-    </Modal>
-  );
 }
 
 export default function UpdateProjectForm() {
@@ -439,6 +325,19 @@ export default function UpdateProjectForm() {
     }
   };
 
+  const modalFields = selectedProject ? [
+    { label: 'Name',                  value: selectedProject.name },
+    { label: 'Slug',                  value: selectedProject.slug },
+    { label: 'Active',                value: selectedProject.active === true ? 'Yes' : selectedProject.active === false ? 'No' : null },
+    { label: 'Description',           value: selectedProject.description },
+    { label: "RENCI's Role",          value: selectedProject.renciRole },
+    { label: 'Owning Group',          value: selectedProject.owningGroup?.label ?? selectedProject.owningGroup?.name },
+    { label: 'Contributors',          value: selectedProject.people?.length ? [...selectedProject.people].sort((a, b) => a.name.localeCompare(b.name)).map((p) => p.name).join(', ') : null },
+    { label: 'Funding Organizations', value: selectedProject.fundingOrgs?.length ? selectedProject.fundingOrgs.map((o) => o.name).join(', ') : null },
+    { label: 'Partner Organizations', value: selectedProject.partnerOrgs?.length ? selectedProject.partnerOrgs.map((o) => o.name).join(', ') : null },
+    { label: 'Websites',              value: selectedProject.websites?.length ? selectedProject.websites.map((w) => w.label ? `${w.label}: ${w.url}` : w.url).join(', ') : null },
+  ] : [];
+
   if (submitSuccess) {
     return <FormSuccessState onReset={() => setSubmitSuccess(false)} />;
   }
@@ -504,13 +403,17 @@ export default function UpdateProjectForm() {
             <Divider />
 
             <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
-
             <Button type="submit" loading={isSubmitting} fullWidth>Submit Update Request</Button>
           </>
         )}
       </Stack>
 
-      <CurrentDataModal opened={modalOpen} onClose={() => setModalOpen(false)} project={selectedProject} />
+      <CurrentDataModal
+        opened={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={selectedProject ? `Current data: ${selectedProject.name}` : ''}
+        fields={modalFields}
+      />
     </form>
   );
 }

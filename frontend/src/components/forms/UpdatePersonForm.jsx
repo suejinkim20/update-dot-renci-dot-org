@@ -13,20 +13,12 @@ import {
   Select,
   MultiSelect,
   Switch,
-  Modal,
   ActionIcon,
   Alert,
   Paper,
-  Badge,
   Checkbox,
-  TextInput as MantineTextInput,
 } from '@mantine/core';
-import {
-  IconEye,
-  IconPlus,
-  IconTrash,
-  IconX,
-} from '@tabler/icons-react';
+import { IconEye, IconPlus, IconTrash } from '@tabler/icons-react';
 import {
   TextInput,
   LongTextInput,
@@ -37,6 +29,10 @@ import {
 import SubmitterEmailField from '../form-components/SubmitterEmailField';
 import SlugConfirmation from '../form-components/SlugConfirmation';
 import FormSuccessState from '../form-components/FormSuccessState';
+import CurrentDataModal from '../form-components/CurrentDataModal';
+import EditableWebsiteList from '../form-components/EditableWebsiteList';
+import RelationalFieldEditor from '../form-components/RelationalFieldEditor';
+import SectionLabel from '../form-components/SectionLabel';
 import { usePeople } from '../../hooks/usePeople';
 import { useProjects } from '../../hooks/useProjects';
 import { useGroups } from '../../hooks/useGroups';
@@ -53,94 +49,13 @@ const FIELD_OPTIONS = [
   { value: 'other',         label: 'Other' },
 ];
 
-function SectionLabel({ children }) {
-  return (
-    <Text size="xs" fw={500} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.04em' }}>
-      {children}
-    </Text>
-  );
-}
-
-function RemovePills({ currentItems = [], value = [], onChange, emptyMessage }) {
-  const markedSlugs = new Set(value);
-  const toggle = (slug) => {
-    const next = markedSlugs.has(slug) ? value.filter((s) => s !== slug) : [...value, slug];
-    onChange(next);
-  };
-  if (currentItems.length === 0) {
-    return <Text size="sm" c="dimmed">{emptyMessage ?? 'None currently listed.'}</Text>;
-  }
-  return (
-    <Group gap="xs" wrap="wrap">
-      {[...currentItems].sort((a, b) => a.name.localeCompare(b.name)).map((item) => {
-        const marked = markedSlugs.has(item.slug);
-        return (
-          <Badge key={item.slug} variant={marked ? 'filled' : 'light'} color={marked ? 'red' : 'gray'} size="lg"
-            style={{ cursor: 'pointer', textDecoration: marked ? 'line-through' : 'none', userSelect: 'none' }}
-            rightSection={<ActionIcon size="xs" color={marked ? 'red' : 'gray'} variant="transparent"><IconX size={10} /></ActionIcon>}
-            onClick={() => toggle(item.slug)}
-          >
-            {item.name}
-          </Badge>
-        );
-      })}
-    </Group>
-  );
-}
-
-function EditableWebsiteList({ currentItems = [], value, onChange }) {
-  const [items, setItems] = useState(() =>
-    value?.length ? value : currentItems.map((w) => ({ ...w, _status: 'included' }))
-  );
-  const notify = (next) => {
-    setItems(next);
-    onChange({
-      keep:   next.filter((i) => i._status === 'included').map(({ _status, ...r }) => r),
-      remove: next.filter((i) => i._status === 'removed').map(({ _status, ...r }) => r),
-      add:    next.filter((i) => i._status === 'added').map(({ _status, ...r }) => r),
-    });
-  };
-  const toggle = (idx) => notify(items.map((item, i) => {
-    if (i !== idx) return item;
-    if (item._status === 'included') return { ...item, _status: 'removed' };
-    if (item._status === 'removed')  return { ...item, _status: 'included' };
-    if (item._status === 'added')    return { ...item, _status: 'removed' };
-    return item;
-  }));
-  const updateField = (idx, field, val) => notify(items.map((item, i) => (i === idx ? { ...item, [field]: val } : item)));
-  const addRow = () => notify([...items, { url: '', label: '', _status: 'added' }]);
-
-  return (
-    <Stack gap="sm">
-      {items.length > 0 && (
-        <Stack gap="xs">
-          {items.map((item, idx) => {
-            const isRemoved = item._status === 'removed';
-            const isNew     = item._status === 'added';
-            return (
-              <Group key={idx} gap="xs" align="flex-end" wrap="nowrap">
-                <ActionIcon size="sm" variant="subtle" color={isRemoved ? 'red' : isNew ? 'teal' : 'gray'} onClick={() => toggle(idx)} mb={4}>
-                  <IconX size={14} style={{ opacity: isRemoved ? 1 : 0.35 }} />
-                </ActionIcon>
-                <MantineTextInput placeholder="https://..." value={item.url || ''} onChange={(e) => updateField(idx, 'url', e.target.value)} disabled={isRemoved} style={{ flex: 2 }} size="sm" label={idx === 0 ? 'URL' : undefined} />
-                <MantineTextInput placeholder="Label (optional)" value={item.label || ''} onChange={(e) => updateField(idx, 'label', e.target.value)} disabled={isRemoved} style={{ flex: 1 }} size="sm" label={idx === 0 ? 'Label' : undefined} />
-              </Group>
-            );
-          })}
-        </Stack>
-      )}
-      <Button variant="subtle" size="xs" leftSection={<IconPlus size={14} />} onClick={addRow} style={{ alignSelf: 'flex-start' }}>Add website</Button>
-    </Stack>
-  );
-}
-
 function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
   const { projects } = useProjects();
   const { researchGroups, operationsGroups } = useGroups();
   const [nameChecks, setNameChecks] = useState({ firstName: false, lastName: false, preferredName: false });
 
   const allGroupOptions = [
-    { group: 'Research Groups', items: (researchGroups || []).map((g) => ({ value: g.slug, label: g.name })) },
+    { group: 'Research Groups',   items: (researchGroups   || []).map((g) => ({ value: g.slug, label: g.name })) },
     { group: 'Operations Groups', items: (operationsGroups || []).map((g) => ({ value: g.slug, label: g.name })) },
   ];
 
@@ -150,18 +65,18 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
         <Stack gap="sm">
           <Text size="sm" c="dimmed">Check the name components you want to update. At least one must be selected.</Text>
           {[
-            { key: 'firstName', label: 'First Name' },
-            { key: 'lastName', label: 'Last Name' },
+            { key: 'firstName',    label: 'First Name' },
+            { key: 'lastName',     label: 'Last Name' },
             { key: 'preferredName', label: 'Preferred Name' },
           ].map(({ key, label }) => (
             <Box key={key}>
               <Checkbox label={label} checked={nameChecks[key]} onChange={(e) => setNameChecks((prev) => ({ ...prev, [key]: e.currentTarget.checked }))} />
               {nameChecks[key] && (
-                <Stack gap={4} pl="xl" mt="xs">
+                <Box pl="xl" mt="xs">
                   <Controller name={`changes.${index}.value.${key}`} control={control} rules={{ required: `${label} is required when selected.` }}
                     render={({ field, fieldState }) => <TextInput {...field} label={`New ${label}`} required error={fieldState.error?.message} />}
                   />
-                </Stack>
+                </Box>
               )}
             </Box>
           ))}
@@ -211,27 +126,28 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
             const notify      = (patch) => field.onChange({ add: addValue, remove: removeValue, ...patch });
             const addedSlugs  = new Set(addValue);
             const addOptions  = [
-              { group: 'Research Groups', items: (researchGroups || []).filter((g) => !currentGroupSlugs.includes(g.slug) && !addedSlugs.has(g.slug)).map((g) => ({ value: g.slug, label: g.name })) },
+              { group: 'Research Groups',   items: (researchGroups   || []).filter((g) => !currentGroupSlugs.includes(g.slug) && !addedSlugs.has(g.slug)).map((g) => ({ value: g.slug, label: g.name })) },
               { group: 'Operations Groups', items: (operationsGroups || []).filter((g) => !currentGroupSlugs.includes(g.slug) && !addedSlugs.has(g.slug)).map((g) => ({ value: g.slug, label: g.name })) },
             ];
             return (
-              <Stack gap="md">
-                <Box>
-                  <Group justify="space-between" align="baseline" mb={6}>
-                    <SectionLabel>Current groups</SectionLabel>
-                    {removeValue.length > 0 && <Text size="xs" c="red">{removeValue.length} marked for removal</Text>}
-                  </Group>
-                  <RemovePills currentItems={selectedPerson?.groups || []} value={removeValue} onChange={(slugs) => notify({ remove: slugs })} emptyMessage="No groups currently assigned." />
-                </Box>
-                <Divider variant="dashed" />
-                <Box>
-                  <Group justify="space-between" align="baseline" mb={6}>
-                    <SectionLabel>Add groups</SectionLabel>
-                    {addValue.length > 0 && <Text size="xs" c="teal">{addValue.length} to be added</Text>}
-                  </Group>
-                  <MultiSelect data={addOptions} value={addValue} onChange={(vals) => notify({ add: vals })} placeholder="Select groups to add" searchable />
-                </Box>
-              </Stack>
+              <RelationalFieldEditor
+                currentLabel="Current groups"
+                addLabel="Add groups"
+                currentItems={selectedPerson?.groups || []}
+                removeValue={removeValue}
+                onRemoveChange={(slugs) => notify({ remove: slugs })}
+                emptyMessage="No groups currently assigned."
+                addCount={addValue.length}
+                addPanel={
+                  <MultiSelect
+                    data={addOptions}
+                    value={addValue}
+                    onChange={(vals) => notify({ add: vals })}
+                    placeholder="Select groups to add"
+                    searchable
+                  />
+                }
+              />
             );
           }}
         />
@@ -248,23 +164,23 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
             const removeValue = field.value?.remove ?? [];
             const notify      = (patch) => field.onChange({ add: addValue, remove: removeValue, ...patch });
             return (
-              <Stack gap="md">
-                <Box>
-                  <Group justify="space-between" align="baseline" mb={6}>
-                    <SectionLabel>Current projects</SectionLabel>
-                    {removeValue.length > 0 && <Text size="xs" c="red">{removeValue.length} marked for removal</Text>}
-                  </Group>
-                  <RemovePills currentItems={currentProjects} value={removeValue} onChange={(slugs) => notify({ remove: slugs })} emptyMessage="No projects currently associated." />
-                </Box>
-                <Divider variant="dashed" />
-                <Box>
-                  <Group justify="space-between" align="baseline" mb={6}>
-                    <SectionLabel>Add projects</SectionLabel>
-                    {Array.isArray(addValue) && addValue.length > 0 && <Text size="xs" c="teal">{addValue.length} to be added</Text>}
-                  </Group>
-                  <TagsInput data={available} value={addValue} onChange={(vals) => notify({ add: vals })} helperText="Search by name. Free text accepted if no match found." />
-                </Box>
-              </Stack>
+              <RelationalFieldEditor
+                currentLabel="Current projects"
+                addLabel="Add projects"
+                currentItems={currentProjects}
+                removeValue={removeValue}
+                onRemoveChange={(slugs) => notify({ remove: slugs })}
+                emptyMessage="No projects currently associated."
+                addCount={Array.isArray(addValue) ? addValue.length : 0}
+                addPanel={
+                  <TagsInput
+                    data={available}
+                    value={addValue}
+                    onChange={(vals) => notify({ add: vals })}
+                    helperText="Search by name. Free text accepted if no match found."
+                  />
+                }
+              />
             );
           }}
         />
@@ -294,36 +210,6 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
     default:
       return null;
   }
-}
-
-function CurrentDataModal({ opened, onClose, person }) {
-  if (!person) return null;
-  const groupNames   = (person.groups || []).sort((a, b) => a.name.localeCompare(b.name)).map((g) => g.name).join(', ');
-  const projectNames = (person.projects || []).sort((a, b) => a.name.localeCompare(b.name)).map((p) => p.name).join(', ');
-  const fields = [
-    { label: 'Name',              value: person.name },
-    { label: 'Slug',              value: person.slug },
-    { label: 'Active',            value: person.active === true ? 'Yes' : person.active === false ? 'No' : null },
-    { label: 'Job Title',         value: person.jobTitle },
-    { label: 'Groups',            value: groupNames || null },
-    { label: 'RENCI Scholar',     value: person.renciScholar ? 'Yes' : 'No' },
-    { label: 'RENCI Scholar Bio', value: person.renciScholarBio },
-    { label: 'Projects',          value: projectNames || null },
-    { label: 'Bio',               value: person.bio },
-    { label: 'Websites',          value: person.websites?.length ? person.websites.map((w) => w.label ? `${w.label}: ${w.url}` : w.url).join(', ') : null },
-  ];
-  return (
-    <Modal opened={opened} onClose={onClose} title={`Current data: ${person.name}`} size="lg">
-      <Stack gap="sm">
-        {fields.map(({ label, value }) => (
-          <Box key={label}>
-            <Text size="xs" c="dimmed" fw={500} tt="uppercase" lts={0.5}>{label}</Text>
-            <Text size="sm">{value || '—'}</Text>
-          </Box>
-        ))}
-      </Stack>
-    </Modal>
-  );
 }
 
 export default function UpdatePersonForm() {
@@ -410,6 +296,19 @@ export default function UpdatePersonForm() {
     }
   };
 
+  const modalFields = selectedPerson ? [
+    { label: 'Name',              value: selectedPerson.name },
+    { label: 'Slug',              value: selectedPerson.slug },
+    { label: 'Active',            value: selectedPerson.active === true ? 'Yes' : selectedPerson.active === false ? 'No' : null },
+    { label: 'Job Title',         value: selectedPerson.jobTitle },
+    { label: 'Groups',            value: (selectedPerson.groups || []).sort((a, b) => a.name.localeCompare(b.name)).map((g) => g.name).join(', ') || null },
+    { label: 'RENCI Scholar',     value: selectedPerson.renciScholar ? 'Yes' : 'No' },
+    { label: 'RENCI Scholar Bio', value: selectedPerson.renciScholarBio },
+    { label: 'Projects',          value: (selectedPerson.projects || []).sort((a, b) => a.name.localeCompare(b.name)).map((p) => p.name).join(', ') || null },
+    { label: 'Bio',               value: selectedPerson.bio },
+    { label: 'Websites',          value: selectedPerson.websites?.length ? selectedPerson.websites.map((w) => w.label ? `${w.label}: ${w.url}` : w.url).join(', ') : null },
+  ] : [];
+
   if (submitSuccess) {
     return <FormSuccessState onReset={() => setSubmitSuccess(false)} />;
   }
@@ -475,13 +374,17 @@ export default function UpdatePersonForm() {
             <Divider />
 
             <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
-
             <Button type="submit" loading={isSubmitting} fullWidth>Submit Update Request</Button>
           </>
         )}
       </Stack>
 
-      <CurrentDataModal opened={modalOpen} onClose={() => setModalOpen(false)} person={selectedPerson} />
+      <CurrentDataModal
+        opened={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={selectedPerson ? `Current data: ${selectedPerson.name}` : ''}
+        fields={modalFields}
+      />
     </form>
   );
 }
