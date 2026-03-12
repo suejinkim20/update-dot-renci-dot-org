@@ -4,7 +4,7 @@ This project runs as two containers using Docker: a Node/Express backend and an 
 
 ## Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- [Docker](https://docs.docker.com/get-docker/) (Docker Engine or Docker Desktop) installed and running
 
 ## Building the images
 
