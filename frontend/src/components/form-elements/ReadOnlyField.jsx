@@ -1,67 +1,47 @@
-import { Stack, Text, Box } from '@mantine/core';
+// frontend/src/components/form-elements/ReadOnlyField.jsx
+//
+// Displays a non-editable field value.
+// Subtle fill, no border — intentionally low visual weight so it doesn't
+// compete with editable inputs.
+//
+// Props:
+//   label    {string}  - Field label
+//   value    {string}  - Display value
+//   isHtml   {boolean} - If true, renders value as sanitized HTML.
+//                        Use for fields where existing data comes from
+//                        WordPress and may contain markup.
 
-/**
- * ReadOnlyField
- * Displays a label and a read-only current value.
- * Used on Update and Archive forms to show existing data above an input.
- *
- * Props:
- *   label        — field label
- *   value        — the current value to display (string, number, or ReactNode)
- *   emptyText    — text shown when value is empty/null (default: "Not set")
- *   helperText   — optional helper text shown below the value
- *   monospace    — if true, renders value in monospace (e.g. for slugs)
- *
- * Usage:
- *   <ReadOnlyField label="Current Slug" value={project.slug} monospace />
- *   <ReadOnlyField label="Current Name" value={project.name} />
- */
-export default function ReadOnlyField({
-  label,
-  value,
-  emptyText = 'Not set',
-  helperText,
-  monospace = false,
-}) {
+import { Box, Text } from '@mantine/core';
+import { sanitizeHtml } from '../../utils/sanitizeHtml';
+
+export default function ReadOnlyField({ label, value, isHtml = false }) {
   const isEmpty = value === null || value === undefined || value === '';
-  const displayValue = isEmpty ? emptyText : value;
 
   return (
-    <Stack gap={2}>
-      <Text
-        size="xs"
-        fw={600}
-        tt="uppercase"
-        c="dimmed"
-        style={{ letterSpacing: '0.04em' }}
-      >
+    <Box
+      style={{
+        backgroundColor: 'var(--mantine-color-gray-1)',
+        borderRadius:     'var(--mantine-radius-sm)',
+        padding:          '0.5rem 0.75rem',
+      }}
+    >
+      <Text size="xs" c="dimmed" fw={500} tt="uppercase" lts={0.5} mb={2}>
         {label}
       </Text>
 
-      <Box
-        style={{
-          padding: '8px 12px',
-          borderRadius: 6,
-          background: 'var(--mantine-color-gray-1)',
-          minHeight: 36,
-        }}
-      >
-        <Text
+      {isEmpty ? (
+        <Text size="sm" c="dimmed" fs="italic">
+          Not provided
+        </Text>
+      ) : isHtml ? (
+        <Box
           size="sm"
-          c={isEmpty ? 'dimmed' : 'dark'}
-          fs={isEmpty ? 'italic' : undefined}
-          ff={monospace ? 'monospace' : undefined}
-          style={{ wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}
-        >
-          {displayValue}
-        </Text>
-      </Box>
-
-      {helperText && (
-        <Text size="xs" c="dimmed" mt={2}>
-          {helperText}
-        </Text>
+          style={{ fontSize: '0.875rem' }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }}
+        />
+      ) : (
+        <Text size="sm">{value}</Text>
       )}
-    </Stack>
+    </Box>
   );
 }

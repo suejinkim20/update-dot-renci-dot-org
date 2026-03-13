@@ -16,3 +16,4 @@ export { default as FieldSelector } from './FieldSelector';
 export { default as ReadOnlyField } from './ReadOnlyField';
 export { default as TagsInput } from './TagsInput';
 export { default as ReviewCheckbox } from './ReviewCheckbox';
+export { default as RichTextInput } from './RichTextInput';

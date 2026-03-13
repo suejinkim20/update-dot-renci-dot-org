@@ -20,6 +20,7 @@ import { IconEye, IconPlus, IconTrash } from '@tabler/icons-react';
 import {
   TextInput as RenciTextInput,
   LongTextInput,
+  RichTextInput,
   AutocompleteField,
   TagsInput,
   ReadOnlyField,
@@ -186,18 +187,18 @@ function ChangeBlockInput({ fieldKey, control, index, selectedProject, people, o
     case 'description':
       return (
         <Stack gap="xs">
-          {selectedProject?.description && <ReadOnlyField label="Current Description" value={selectedProject.description} />}
+          {selectedProject?.description && <ReadOnlyField label="Current Description" value={selectedProject.description} isHtml />}
           <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New description is required' }} render={({ field, fieldState }) => (
-            <LongTextInput {...field} label="New Description" required error={fieldState.error?.message} />
+            <RichTextInput {...field} label="New Description" required error={fieldState.error?.message} />
           )} />
         </Stack>
       );
     case 'renciRole':
       return (
         <Stack gap="xs">
-          {selectedProject?.renciRole && <ReadOnlyField label="Current RENCI Role" value={selectedProject.renciRole} />}
+          {selectedProject?.renciRole && <ReadOnlyField label="Current RENCI Role" value={selectedProject.renciRole} isHtml />}
           <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New RENCI Role is required' }} render={({ field, fieldState }) => (
-            <RenciTextInput {...field} label="New RENCI Role" required error={fieldState.error?.message} />
+            <RichTextInput {...field} label="New RENCI Role" required error={fieldState.error?.message} />
           )} />
         </Stack>
       );
@@ -325,16 +326,17 @@ export default function UpdateProjectForm() {
   };
 
   const modalFields = selectedProject ? [
-    { label: 'Name',                  value: selectedProject.name },
-    { label: 'Slug',                  value: selectedProject.slug },
-    { label: 'Active',                value: selectedProject.active === true ? 'Yes' : selectedProject.active === false ? 'No' : null },
-    { label: 'Description',           value: selectedProject.description },
-    { label: "RENCI's Role",          value: selectedProject.renciRole },
-    { label: 'Owning Group',          value: selectedProject.owningGroup?.label ?? selectedProject.owningGroup?.name },
-    { label: 'Contributors',          value: selectedProject.people?.length ? [...selectedProject.people].sort((a, b) => a.name.localeCompare(b.name)).map((p) => p.name).join(', ') : null },
-    { label: 'Funding Organizations', value: selectedProject.fundingOrgs?.length ? selectedProject.fundingOrgs.map((o) => o.name).join(', ') : null },
-    { label: 'Partner Organizations', value: selectedProject.partnerOrgs?.length ? selectedProject.partnerOrgs.map((o) => o.name).join(', ') : null },
-    { label: 'Websites',              value: selectedProject.websites?.length ? selectedProject.websites.map((w) => w.label ? `${w.label}: ${w.url}` : w.url).join(', ') : null },
+    { label: 'Name',                   value: selectedProject.name },
+    { label: 'Slug',                   value: selectedProject.slug },
+    { label: 'Active',                 value: selectedProject.active === true ? 'Yes' : selectedProject.active === false ? 'No' : null },
+    { label: 'Description',            value: selectedProject.description,           isHtml: true },
+    { label: 'Additional Description', value: selectedProject.additionalDescription, isHtml: true },
+    { label: "RENCI's Role",           value: selectedProject.renciRole,             isHtml: true },
+    { label: 'Owning Group',           value: selectedProject.owningGroup?.label ?? selectedProject.owningGroup?.name },
+    { label: 'Contributors',           value: selectedProject.people?.length ? [...selectedProject.people].sort((a, b) => a.name.localeCompare(b.name)).map((p) => p.name).join(', ') : null },
+    { label: 'Funding Organizations',  value: selectedProject.fundingOrgs?.length ? selectedProject.fundingOrgs.map((o) => o.name).join(', ') : null },
+    { label: 'Partner Organizations',  value: selectedProject.partnerOrgs?.length ? selectedProject.partnerOrgs.map((o) => o.name).join(', ') : null },
+    { label: 'Websites',               value: selectedProject.websites, isWebsites: true },
   ] : [];
 
   if (submitSuccess) {

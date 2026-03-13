@@ -16,8 +16,9 @@ async function fetchJson(url) {
 
 /**
  * FormDataProvider
- * Fetches people, groups, and organizations in parallel on mount.
+ * Fetches people, projects, groups, and organizations in parallel on mount.
  * Results are cached for the lifetime of the session — no re-fetching on form open.
+ * All arrays are sorted alphabetically by name at load time.
  *
  * Wrap your app root with this provider:
  *   <FormDataProvider>
@@ -49,7 +50,7 @@ export function FormDataProvider({ children }) {
         const byName = (a, b) => a.name.localeCompare(b.name);
 
         setPeople([...peopleData].sort(byName));
-        setProjects(projectsData);
+        setProjects([...projectsData].sort(byName));
         setResearchGroups([...groupsData.researchGroups ?? []].sort(byName));
         setOperationsGroups([...groupsData.operationsGroups ?? []].sort(byName));
         setOrganizations([...orgsData].sort(byName));

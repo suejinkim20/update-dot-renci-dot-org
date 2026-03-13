@@ -22,6 +22,7 @@ import { IconEye, IconPlus, IconTrash } from '@tabler/icons-react';
 import {
   TextInput,
   LongTextInput,
+  RichTextInput,
   AutocompleteField,
   TagsInput,
   ReadOnlyField,
@@ -53,19 +54,14 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
   const { researchGroups, operationsGroups } = useGroups();
   const [nameChecks, setNameChecks] = useState({ firstName: false, lastName: false, preferredName: false });
 
-  const allGroupOptions = [
-    { group: 'Research Groups',   items: (researchGroups   || []).map((g) => ({ value: g.slug, label: g.name })) },
-    { group: 'Operations Groups', items: (operationsGroups || []).map((g) => ({ value: g.slug, label: g.name })) },
-  ];
-
   switch (fieldKey) {
     case 'name':
       return (
         <Stack gap="sm">
           <Text size="sm" c="dimmed">Check the name components you want to update. At least one must be selected.</Text>
           {[
-            { key: 'firstName',    label: 'First Name' },
-            { key: 'lastName',     label: 'Last Name' },
+            { key: 'firstName',     label: 'First Name' },
+            { key: 'lastName',      label: 'Last Name' },
             { key: 'preferredName', label: 'Preferred Name' },
           ].map(({ key, label }) => (
             <Box key={key}>
@@ -93,9 +89,9 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
     case 'bio':
       return (
         <Stack gap="xs">
-          {selectedPerson?.bio && <ReadOnlyField label="Current Bio" value={selectedPerson.bio} />}
+          {selectedPerson?.bio && <ReadOnlyField label="Current Bio" value={selectedPerson.bio} isHtml />}
           <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'Bio is required.' }}
-            render={({ field, fieldState }) => <LongTextInput {...field} label="New Bio" required helperText="Note: a rich text editor will replace this field in a future update." error={fieldState.error?.message} />}
+            render={({ field, fieldState }) => <RichTextInput {...field} label="New Bio" required error={fieldState.error?.message} />}
           />
         </Stack>
       );
@@ -109,7 +105,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
           <Controller name={`changes.${index}.value.renciScholar`} control={control}
             render={({ field: switchField }) => switchField.value ? (
               <Controller name={`changes.${index}.value.renciScholarBio`} control={control}
-                render={({ field, fieldState }) => <LongTextInput {...field} label="RENCI Scholar Bio" helperText="Note: a rich text editor will replace this field in a future update." error={fieldState.error?.message} />}
+                render={({ field, fieldState }) => <RichTextInput {...field} label="RENCI Scholar Bio" error={fieldState.error?.message} />}
               />
             ) : null}
           />
@@ -302,10 +298,10 @@ export default function UpdatePersonForm() {
     { label: 'Job Title',         value: selectedPerson.jobTitle },
     { label: 'Groups',            value: (selectedPerson.groups || []).sort((a, b) => a.name.localeCompare(b.name)).map((g) => g.name).join(', ') || null },
     { label: 'RENCI Scholar',     value: selectedPerson.renciScholar ? 'Yes' : 'No' },
-    { label: 'RENCI Scholar Bio', value: selectedPerson.renciScholarBio },
+    { label: 'RENCI Scholar Bio', value: selectedPerson.renciScholarBio, isHtml: true },
     { label: 'Projects',          value: (selectedPerson.projects || []).sort((a, b) => a.name.localeCompare(b.name)).map((p) => p.name).join(', ') || null },
-    { label: 'Bio',               value: selectedPerson.bio },
-    { label: 'Websites',          value: selectedPerson.websites?.length ? selectedPerson.websites.map((w) => w.label ? `${w.label}: ${w.url}` : w.url).join(', ') : null },
+    { label: 'Bio',               value: selectedPerson.bio, isHtml: true },
+    { label: 'Websites',          value: selectedPerson.websites, isWebsites: true },
   ] : [];
 
   if (submitSuccess) {

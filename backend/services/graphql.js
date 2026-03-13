@@ -73,7 +73,6 @@ export async function getPeople() {
   // Fields confirmed available in the API as of RN-201.
   // Not yet in API (add when confirmed): active, job_title, start_date,
   // chief_scientist, chief_scientist_bio.
-  // Out of scope for MVP: publications.
   const query = `
     query AllPeople($page: PaginationInput) {
       all_staff(page: $page) {
@@ -86,6 +85,7 @@ export async function getPeople() {
         projects { name post_id slug }
         research_groups { name post_id slug }
         operations_groups { name slug post_id }
+        publications { publication_type status date_published title }
       }
     }
   `;
@@ -111,8 +111,8 @@ export async function getPeople() {
  * Normalize a raw GraphQL person object.
  *
  * biography → bio: matches the form field name and content model.
- * urls: flat string array from API. Normalized to { url, label: null } objects
- * so the website display in the Update form modal is consistent with projects.
+ * urls: flat string array from API. Normalized to { url } objects —
+ * consistent with how EditableWebsiteList and formatWebsites handle entries.
  * sorting_name: kept as-is; informational only, not a form field.
  *
  * Not yet in API (defaulted to null/false until available):
@@ -120,6 +120,9 @@ export async function getPeople() {
  *
  * groups: merged flat list of research + operations groups, each tagged with
  * a `type` field for grouped MultiSelect display in the Update Person form.
+ *
+ * publications: normalized from API and available on the person object.
+ * Not yet used in forms — available for future use.
  */
 function normalizePerson(raw) {
   const p = normalizeIds(raw);
@@ -133,9 +136,8 @@ function normalizePerson(raw) {
     slug: p.slug,
     sortingName: p.sorting_name ?? null,
     bio: p.biography ?? null,
-    // urls is a flat string array — normalize to { url, label: null } for
-    // consistent handling in the websites display and EditableWebsiteList.
-    websites: (p.urls || []).map((url) => ({ url, label: null })),
+    // urls is a flat string array from the API — normalize to { url } objects only.
+    websites: (p.urls || []).map((url) => ({ url })),
 
     // Not yet in API
     active: null,
@@ -153,6 +155,13 @@ function normalizePerson(raw) {
       ...researchGroups.map((g) => ({ ...g, type: 'research' })),
       ...operationsGroups.map((g) => ({ ...g, type: 'operations' })),
     ],
+    // publications: normalized from API. Not yet used in forms.
+    publications: (p.publications || []).map((pub) => ({
+      publicationType: pub.publication_type ?? null,
+      status: pub.status ?? null,
+      datePublished: pub.date_published ?? null,
+      title: pub.title ?? null,
+    })),
   };
 }
 
@@ -164,6 +173,9 @@ export async function getProjects() {
         post_id
         name
         active
+        description
+        additional_description
+        rencis_role
         contributors { name slug post_id }
         research_groups { name slug post_id }
         operations_groups { name slug post_id }
@@ -194,7 +206,11 @@ export async function getProjects() {
  * Normalize a raw GraphQL project object.
  *
  * owningGroup: inferred from research_groups[0] ?? operations_groups[0].
- * description, renciRole, websites: not yet available in the API.
+ * rencis_role: API field name has a typo (should be renci_role). Mapped to
+ * renciRole here. If the API corrects the typo, update this line only.
+ * additionalDescription: available on the project object and surfaced in
+ * CurrentDataModal. Not yet a form field.
+ * websites: not yet available in the API.
  */
 function normalizeProject(raw) {
   const p = normalizeIds(raw);
@@ -209,9 +225,14 @@ function normalizeProject(raw) {
     slug: p.slug,
     active: p.active ?? null,
 
+    description: p.description ?? null,
+    // API field is `additional_description` — surfaced in CurrentDataModal only, not a form field.
+    additionalDescription: p.additional_description ?? null,
+    // Note: API field is `rencis_role` (typo — should be `renci_role`).
+    // If/when the API corrects the typo, update this mapping only.
+    renciRole: p.rencis_role ?? null,
+
     // Not yet in API
-    description: null,
-    renciRole: null,
     websites: [],
 
     owningGroup,
