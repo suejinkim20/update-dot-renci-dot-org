@@ -2,6 +2,7 @@
 import { Box } from '@mantine/core';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
+import VpnBanner from './VpnBanner';
 import Footer from './Footer';
 
 export default function Layout() {
@@ -14,6 +15,7 @@ export default function Layout() {
         background: '#f9f9f9',
       }}
     >
+      <VpnBanner />
       <Header />
       <Box component="main" style={{ flex: 1 }}>
         <Outlet />

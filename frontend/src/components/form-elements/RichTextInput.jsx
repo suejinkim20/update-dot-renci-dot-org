@@ -1,8 +1,10 @@
-// frontend/src/components/form-elements/RichTextInput.jsx
+// frontend/src/components/fields/RichTextInput.jsx
 //
 // Markdown-based rich text input with a Write / Preview tab toggle.
 // Users write in markdown; the Preview tab renders it as styled HTML.
 // The submitted value is always the raw markdown string.
+//
+// The Write textarea is vertically resizable via the bottom-right handle.
 //
 // Supported markdown:
 //   **bold**, *italic*, # headings (h1–h4),
@@ -17,7 +19,6 @@ import { Box, Tabs, Textarea, Text, TypographyStylesProvider } from '@mantine/co
 // ---------------------------------------------------------------------------
 // Minimal markdown → HTML converter.
 // Handles the subset of markdown users will realistically need in these fields.
-// Not a full CommonMark implementation — edge cases are acceptable here.
 // ---------------------------------------------------------------------------
 function markdownToHtml(md) {
   if (!md) return '';
@@ -53,7 +54,6 @@ function markdownToHtml(md) {
     });
 
   // Paragraphs: split on blank lines, wrap non-block content in <p>.
-  // Block elements (headings, lists) are left unwrapped.
   const blockRe = /^<(h[1-4]|ul|ol|li)/;
   html = html
     .split(/\n{2,}/)
@@ -61,7 +61,6 @@ function markdownToHtml(md) {
       block = block.trim();
       if (!block) return '';
       if (blockRe.test(block)) return block;
-      // Convert single newlines within a paragraph to <br>.
       return `<p>${block.replace(/\n/g, '<br />')}</p>`;
     })
     .join('\n');
@@ -92,7 +91,6 @@ const RichTextInput = forwardRef(function RichTextInput(
 
   return (
     <Box>
-      {/* Label */}
       {label && (
         <Text component="label" size="sm" fw={600} mb={4} display="block">
           {label}
@@ -125,6 +123,9 @@ const RichTextInput = forwardRef(function RichTextInput(
                 borderTopRightRadius: 0,
                 fontFamily: 'monospace',
                 fontSize: '0.8rem',
+                // Vertical resize only — horizontal would break layout.
+                resize: 'vertical',
+                minHeight: `${rows * 1.6}rem`,
               },
             }}
             {...rest}
@@ -155,7 +156,6 @@ const RichTextInput = forwardRef(function RichTextInput(
               </Text>
             )}
           </Box>
-          {/* Show error below preview panel too so it's not hidden */}
           {error && (
             <Text size="xs" c="red" mt={4}>
               {error}

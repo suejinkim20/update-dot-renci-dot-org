@@ -1,7 +1,7 @@
 // frontend/src/components/forms/AddPersonForm.jsx
 
 import { useState } from 'react';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import {
   Stack,
   Group,
@@ -11,20 +11,20 @@ import {
   Title,
   Text,
   Alert,
-  ActionIcon,
   Divider,
   Paper,
   Collapse,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
-import { IconTrash, IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle } from '@tabler/icons-react';
 
 import TextInput from '../form-elements/TextInput';
-import LongTextInput from '../form-elements/LongTextInput';
-import UrlInput from '../form-elements/UrlInput';
+import RichTextInput from '../form-elements/RichTextInput';
 import TagsInput from '../form-elements/TagsInput';
+import EditableWebsiteList from '../form-blocks/EditableWebsiteList';
 import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import FormSuccessState from '../form-blocks/FormSuccessState';
+import FormIntro from '../form-blocks/FormIntro';
 
 import { useProjects } from '../../hooks/useProjects';
 import { useGroups } from '../../hooks/useGroups';
@@ -60,7 +60,6 @@ export default function AddPersonForm() {
     },
   });
 
-  const { fields: websiteFields, append, remove } = useFieldArray({ control, name: 'websites' });
   const renciScholar = watch('renciScholar');
 
   const groupOptions = [
@@ -82,6 +81,8 @@ export default function AddPersonForm() {
     const payload = {
       ...data,
       startDate: data.startDate ? data.startDate.toISOString().slice(0, 10) : null,
+      // Normalize websites: strip empty entries before submitting.
+      websites: (data.websites || []).filter((w) => w.url?.trim()),
     };
 
     try {
@@ -99,7 +100,9 @@ export default function AddPersonForm() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setSubmitError(body?.errors?.map((e) => e.message).join(', ') || `Submission failed (${res.status})`);
+        setSubmitError(
+          body?.errors?.map((e) => e.message).join(', ') || `Submission failed (${res.status})`
+        );
         setSubmitStatus('error');
         return;
       }
@@ -127,8 +130,15 @@ export default function AddPersonForm() {
         </Text>
       </div>
 
+      <FormIntro variant="add-person" />
+
       {submitStatus === 'error' && (
-        <Alert icon={<IconAlertCircle size={18} />} title="Submission failed" color="red" variant="light">
+        <Alert
+          icon={<IconAlertCircle size={18} />}
+          title="Submission failed"
+          color="red"
+          variant="light"
+        >
           {submitError}
         </Alert>
       )}
@@ -144,7 +154,12 @@ export default function AddPersonForm() {
               control={control}
               rules={{ required: 'First name is required.' }}
               render={({ field }) => (
-                <TextInput {...field} label="First Name" required error={errors.firstName?.message} />
+                <TextInput
+                  {...field}
+                  label="First Name"
+                  required
+                  error={errors.firstName?.message}
+                />
               )}
             />
             <Controller
@@ -152,7 +167,12 @@ export default function AddPersonForm() {
               control={control}
               rules={{ required: 'Last name is required.' }}
               render={({ field }) => (
-                <TextInput {...field} label="Last Name" required error={errors.lastName?.message} />
+                <TextInput
+                  {...field}
+                  label="Last Name"
+                  required
+                  error={errors.lastName?.message}
+                />
               )}
             />
           </Group>
@@ -191,7 +211,8 @@ export default function AddPersonForm() {
             name="groups"
             control={control}
             rules={{
-              validate: (v) => (Array.isArray(v) && v.length > 0) || 'At least one group is required.',
+              validate: (v) =>
+                (Array.isArray(v) && v.length > 0) || 'At least one group is required.',
             }}
             render={({ field }) => (
               <MultiSelect
@@ -256,11 +277,10 @@ export default function AddPersonForm() {
                   'RENCI Scholar bio is required when RENCI Scholar is enabled.',
               }}
               render={({ field }) => (
-                <LongTextInput
+                <RichTextInput
                   {...field}
                   label="RENCI Scholar Bio"
                   required
-                  helperText="Note: a rich text editor will replace this field in a future update."
                   error={errors.renciScholarBio?.message}
                 />
               )}
@@ -289,10 +309,9 @@ export default function AddPersonForm() {
             name="bio"
             control={control}
             render={({ field }) => (
-              <LongTextInput
+              <RichTextInput
                 {...field}
                 label="Biography"
-                helperText="Note: a rich text editor will replace this field in a future update."
                 error={errors.bio?.message}
               />
             )}
@@ -300,43 +319,19 @@ export default function AddPersonForm() {
 
           <Divider label="Websites" labelPosition="left" />
 
-          <Stack gap="xs">
-            <Group justify="space-between" align="center">
-              <Text fw={600} size="sm">Websites</Text>
-              <Button size="xs" variant="light" onClick={() => append({ url: '', label: '' })}>
-                + Add website
-              </Button>
-            </Group>
-
-            {websiteFields.length === 0 && (
-              <Text size="sm" c="dimmed" fs="italic" py={4}>No websites added yet.</Text>
+          {/* EditableWebsiteList manages its own internal rows.
+              In Add forms there are no currentItems — it renders
+              only the editable entry rows. */}
+          <Controller
+            name="websites"
+            control={control}
+            render={({ field }) => (
+              <EditableWebsiteList
+                value={field.value}
+                onChange={field.onChange}
+              />
             )}
-
-            {websiteFields.map((websiteField, index) => (
-              <div key={websiteField.id}>
-                <Group align="flex-end" gap="sm">
-                  <Controller
-                    name={`websites.${index}.url`}
-                    control={control}
-                    render={({ field }) => (
-                      <UrlInput {...field} label="URL" error={errors.websites?.[index]?.url?.message} style={{ flex: 2 }} />
-                    )}
-                  />
-                  <Controller
-                    name={`websites.${index}.label`}
-                    control={control}
-                    render={({ field }) => (
-                      <TextInput {...field} label="Label (optional)" style={{ flex: 1 }} />
-                    )}
-                  />
-                  <ActionIcon color="red" variant="subtle" onClick={() => remove(index)} mb={1} aria-label="Remove website">
-                    <IconTrash size={16} />
-                  </ActionIcon>
-                </Group>
-                {index < websiteFields.length - 1 && <Divider mt="sm" />}
-              </div>
-            ))}
-          </Stack>
+          />
 
           <Paper radius="md" p="md" style={{ background: '#f0f7fc', border: '1px solid #bbd6ea' }}>
             <Text size="sm" fw={600} mb={4}>Headshot</Text>

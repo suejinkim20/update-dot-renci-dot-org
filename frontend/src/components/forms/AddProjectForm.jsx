@@ -1,7 +1,7 @@
 // frontend/src/components/forms/AddProjectForm.jsx
 
 import { useState } from 'react';
-import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import {
   Stack,
   Group,
@@ -10,28 +10,30 @@ import {
   Title,
   Text,
   Alert,
-  ActionIcon,
   Divider,
 } from '@mantine/core';
-import { IconTrash, IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
+import { IconAlertCircle } from '@tabler/icons-react';
 
 import TextInput from '../form-elements/TextInput';
-import LongTextInput from '../form-elements/LongTextInput';
-import UrlInput from '../form-elements/UrlInput';
+import RichTextInput from '../form-elements/RichTextInput';
 import TagsInput from '../form-elements/TagsInput';
+import EditableWebsiteList from '../form-blocks/EditableWebsiteList';
 import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import FormSuccessState from '../form-blocks/FormSuccessState';
+import FormIntro from '../form-blocks/FormIntro';
 
 import { usePeople } from '../../hooks/usePeople';
 import { useGroups } from '../../hooks/useGroups';
 import { useOrganizations } from '../../hooks/useOrganizations';
 
+// Acronyms are display-only — stored value is always the group slug.
 const GROUP_ACRONYMS = {
-  'earth-data-science':                 'EDS',
-  'networking-research-infrastructure': 'NRIG',
-  'acis':                               'ACIS',
-  'ood':                                'OOD',
-  'research-project-management':        'RPM',
+  'data-management':                     'iRODS',
+  'earth-data-science':                  'EDS',
+  'network-research-and-infrastructure': 'NRIG',
+  'advanced-cyberinfrastructure-support':'ACIS',
+  'office-of-the-director':              'OOD',
+  'research-project-management':         'RPM',
 };
 
 function groupLabel(group) {
@@ -47,11 +49,11 @@ export default function AddProjectForm() {
   const owningGroupOptions = [
     {
       group: 'Research Groups',
-      items: researchGroups.map((g) => ({ value: g.slug, label: groupLabel(g) })),
+      items: (researchGroups || []).map((g) => ({ value: g.slug, label: groupLabel(g) })),
     },
     {
       group: 'Operations Groups',
-      items: operationsGroups.map((g) => ({ value: g.slug, label: groupLabel(g) })),
+      items: (operationsGroups || []).map((g) => ({ value: g.slug, label: groupLabel(g) })),
     },
   ];
 
@@ -79,21 +81,21 @@ export default function AddProjectForm() {
     },
   });
 
-  const { fields: websiteFields, append, remove } = useFieldArray({
-    control,
-    name: 'websites',
-  });
-
   const onSubmit = async (data) => {
     setSubmitting(true);
     setSubmitStatus(null);
     setSubmitError('');
 
+    const payload = {
+      ...data,
+      websites: (data.websites || []).filter((w) => w.url?.trim()),
+    };
+
     try {
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
       if (res.status === 503) {
@@ -104,7 +106,9 @@ export default function AddProjectForm() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setSubmitError(body?.errors?.map((e) => e.message).join(', ') || `Submission failed (${res.status})`);
+        setSubmitError(
+          body?.errors?.map((e) => e.message).join(', ') || `Submission failed (${res.status})`
+        );
         setSubmitStatus('error');
         return;
       }
@@ -132,8 +136,15 @@ export default function AddProjectForm() {
         </Text>
       </div>
 
+      <FormIntro variant="add-project" />
+
       {submitStatus === 'error' && (
-        <Alert icon={<IconAlertCircle size={18} />} title="Submission failed" color="red" variant="light">
+        <Alert
+          icon={<IconAlertCircle size={18} />}
+          title="Submission failed"
+          color="red"
+          variant="light"
+        >
           {submitError}
         </Alert>
       )}
@@ -148,7 +159,12 @@ export default function AddProjectForm() {
             control={control}
             rules={{ required: 'Project Name is required.' }}
             render={({ field }) => (
-              <TextInput {...field} label="Project Name" required error={errors.name?.message} />
+              <TextInput
+                {...field}
+                label="Project Name"
+                required
+                error={errors.name?.message}
+              />
             )}
           />
 
@@ -159,7 +175,7 @@ export default function AddProjectForm() {
               <TextInput
                 {...field}
                 label="Preferred Slug"
-                helperText="Leave blank and the team will generate one."
+                helperText={`A slug is the URL identifier for this page — e.g. "my-project-name" in renci.org/project/my-project-name. Leave blank and the team will generate one. Must be approved before going live.`}
                 error={errors.slug?.message}
               />
             )}
@@ -170,7 +186,12 @@ export default function AddProjectForm() {
             control={control}
             rules={{ required: 'Description is required.' }}
             render={({ field }) => (
-              <LongTextInput {...field} label="Description" required error={errors.description?.message} />
+              <RichTextInput
+                {...field}
+                label="Description"
+                required
+                error={errors.description?.message}
+              />
             )}
           />
 
@@ -179,7 +200,12 @@ export default function AddProjectForm() {
             control={control}
             rules={{ required: "RENCI's Role is required." }}
             render={({ field }) => (
-              <TextInput {...field} label="RENCI's Role" required error={errors.renciRole?.message} />
+              <RichTextInput
+                {...field}
+                label="RENCI's Role"
+                required
+                error={errors.renciRole?.message}
+              />
             )}
           />
 
@@ -215,7 +241,7 @@ export default function AddProjectForm() {
               <TagsInput
                 {...field}
                 label="Contributors"
-                data={people}
+                data={people || []}
                 placeholder={peopleLoading ? 'Loading people…' : 'Search by name…'}
                 disabled={peopleLoading}
                 error={errors.people?.message}
@@ -231,7 +257,7 @@ export default function AddProjectForm() {
               <TagsInput
                 {...field}
                 label="Funding Organizations"
-                data={organizations}
+                data={organizations || []}
                 placeholder={orgsLoading ? 'Loading organizations…' : 'Search or type and press Enter…'}
                 disabled={orgsLoading}
                 error={errors.fundingOrgs?.message}
@@ -246,7 +272,7 @@ export default function AddProjectForm() {
               <TagsInput
                 {...field}
                 label="Partner Organizations"
-                data={organizations}
+                data={organizations || []}
                 placeholder={orgsLoading ? 'Loading organizations…' : 'Search or type and press Enter…'}
                 disabled={orgsLoading}
                 error={errors.partnerOrgs?.message}
@@ -256,43 +282,16 @@ export default function AddProjectForm() {
 
           <Divider label="Websites" labelPosition="left" />
 
-          <Stack gap="xs">
-            <Group justify="space-between" align="center">
-              <Text fw={600} size="sm">Websites</Text>
-              <Button size="xs" variant="light" onClick={() => append({ url: '', label: '' })}>
-                + Add website
-              </Button>
-            </Group>
-
-            {websiteFields.length === 0 && (
-              <Text size="sm" c="dimmed" fs="italic" py={4}>No websites added yet.</Text>
+          <Controller
+            name="websites"
+            control={control}
+            render={({ field }) => (
+              <EditableWebsiteList
+                value={field.value}
+                onChange={field.onChange}
+              />
             )}
-
-            {websiteFields.map((websiteField, index) => (
-              <div key={websiteField.id}>
-                <Group align="flex-end" gap="sm">
-                  <Controller
-                    name={`websites.${index}.url`}
-                    control={control}
-                    render={({ field }) => (
-                      <UrlInput {...field} label="URL" error={errors.websites?.[index]?.url?.message} style={{ flex: 2 }} />
-                    )}
-                  />
-                  <Controller
-                    name={`websites.${index}.label`}
-                    control={control}
-                    render={({ field }) => (
-                      <TextInput {...field} label="Label (optional)" error={errors.websites?.[index]?.label?.message} style={{ flex: 1 }} />
-                    )}
-                  />
-                  <ActionIcon color="red" variant="subtle" onClick={() => remove(index)} mb={1} aria-label="Remove website">
-                    <IconTrash size={16} />
-                  </ActionIcon>
-                </Group>
-                {index < websiteFields.length - 1 && <Divider mt="sm" />}
-              </div>
-            ))}
-          </Stack>
+          />
 
           <Divider />
 

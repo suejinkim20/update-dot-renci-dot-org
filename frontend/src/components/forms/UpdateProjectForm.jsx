@@ -31,6 +31,8 @@ import FormSuccessState from '../form-blocks/FormSuccessState';
 import CurrentDataModal from '../form-blocks/CurrentDataModal';
 import EditableWebsiteList from '../form-blocks/EditableWebsiteList';
 import RelationalFieldEditor from '../form-blocks/RelationalFieldEditor';
+import FormIntro from '../form-blocks/FormIntro';
+
 import { useProjects } from '../../hooks/useProjects';
 import { useGroups } from '../../hooks/useGroups';
 import { usePeople } from '../../hooks/usePeople';
@@ -348,6 +350,8 @@ export default function UpdateProjectForm() {
       <Stack gap="xl">
         <Box>
           <Title order={4} mb="sm">Identify the Project</Title>
+          <FormIntro variant="update-project" />
+          
           <Stack gap="sm">
             {projectsError ? (
               <Alert color="red">Could not load projects. Make sure you are connected to the VPN.</Alert>

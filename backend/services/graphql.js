@@ -85,7 +85,14 @@ export async function getPeople() {
         projects { name post_id slug }
         research_groups { name post_id slug }
         operations_groups { name slug post_id }
-        publications { publication_type status date_published title }
+        publications {
+          publication_type
+          status
+          date_published
+          title
+          doi
+          slug
+        }
       }
     }
   `;
@@ -121,8 +128,9 @@ export async function getPeople() {
  * groups: merged flat list of research + operations groups, each tagged with
  * a `type` field for grouped MultiSelect display in the Update Person form.
  *
- * publications: normalized from API and available on the person object.
- * Not yet used in forms — available for future use.
+ * publications: normalized from API. Displayed read-only in modal.
+ * Staff can submit publication additions via Update Person form (DOI-based).
+ * citation is intentionally excluded — too long for form display.
  */
 function normalizePerson(raw) {
   const p = normalizeIds(raw);
@@ -155,12 +163,16 @@ function normalizePerson(raw) {
       ...researchGroups.map((g) => ({ ...g, type: 'research' })),
       ...operationsGroups.map((g) => ({ ...g, type: 'operations' })),
     ],
-    // publications: normalized from API. Not yet used in forms.
+    // Publications from API. citation field excluded (too long for display).
+    // Modal shows title, date_published, doi only.
+    // Staff submit additions via Update Person form using DOI.
     publications: (p.publications || []).map((pub) => ({
+      title: pub.title ?? null,
       publicationType: pub.publication_type ?? null,
       status: pub.status ?? null,
       datePublished: pub.date_published ?? null,
-      title: pub.title ?? null,
+      doi: pub.doi ?? null,
+      slug: pub.slug ?? null,
     })),
   };
 }
@@ -176,6 +188,7 @@ export async function getProjects() {
         description
         additional_description
         rencis_role
+        urls
         contributors { name slug post_id }
         research_groups { name slug post_id }
         operations_groups { name slug post_id }
@@ -210,7 +223,7 @@ export async function getProjects() {
  * renciRole here. If the API corrects the typo, update this line only.
  * additionalDescription: available on the project object and surfaced in
  * CurrentDataModal. Not yet a form field.
- * websites: not yet available in the API.
+ * urls: flat string array, normalized to { url } objects — same pattern as people.
  */
 function normalizeProject(raw) {
   const p = normalizeIds(raw);
@@ -232,8 +245,8 @@ function normalizeProject(raw) {
     // If/when the API corrects the typo, update this mapping only.
     renciRole: p.rencis_role ?? null,
 
-    // Not yet in API
-    websites: [],
+    // urls is a flat string array from the API — normalize to { url } objects only.
+    websites: (p.urls || []).map((url) => ({ url })),
 
     owningGroup,
     people: (p.contributors || []).map(normalizeIds),

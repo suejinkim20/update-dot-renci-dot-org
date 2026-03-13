@@ -17,8 +17,10 @@ import {
   Alert,
   Paper,
   Checkbox,
+  Anchor,
+  TextInput as MantineTextInput,
 } from '@mantine/core';
-import { IconEye, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconEye, IconPlus, IconTrash, IconExternalLink } from '@tabler/icons-react';
 import {
   TextInput,
   LongTextInput,
@@ -33,6 +35,8 @@ import FormSuccessState from '../form-blocks/FormSuccessState';
 import CurrentDataModal from '../form-blocks/CurrentDataModal';
 import EditableWebsiteList from '../form-blocks/EditableWebsiteList';
 import RelationalFieldEditor from '../form-blocks/RelationalFieldEditor';
+import FormIntro from '../form-blocks/FormIntro';
+
 import { usePeople } from '../../hooks/usePeople';
 import { useProjects } from '../../hooks/useProjects';
 import { useGroups } from '../../hooks/useGroups';
@@ -45,31 +49,160 @@ const FIELD_OPTIONS = [
   { value: 'groups',        label: 'Edit Groups' },
   { value: 'projects',      label: 'Edit Projects' },
   { value: 'websites',      label: 'Edit Websites' },
+  { value: 'publications',  label: 'Edit Publications' },
   { value: 'headshot',      label: 'Update Headshot' },
   { value: 'other',         label: 'Other' },
 ];
 
+// ---------------------------------------------------------------------------
+// Publications repeatable editor
+// Same UI pattern as EditableWebsiteList — one row per entry, each with a
+// DOI field. Staff add DOIs for new publications; the implementing team
+// resolves and links them in WordPress.
+// ---------------------------------------------------------------------------
+function EditPublications({ currentItems = [], value, onChange }) {
+  const emptyEntry = () => ({ doi: '' });
+  const items = Array.isArray(value) && value.length > 0 ? value : [emptyEntry()];
+
+  const update = (index, patch) => {
+    const next = items.map((item, i) => (i === index ? { ...item, ...patch } : item));
+    onChange(next);
+  };
+
+  const addEntry = () => onChange([...items, emptyEntry()]);
+
+  const removeEntry = (index) => {
+    const next = items.filter((_, i) => i !== index);
+    onChange(next.length > 0 ? next : [emptyEntry()]);
+  };
+
+  const hasCurrentItems = Array.isArray(currentItems) && currentItems.length > 0;
+
+  return (
+    <Stack gap="sm">
+      {hasCurrentItems && (
+        <Box>
+          <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={6}>
+            Current publications
+          </Text>
+          <Stack gap={6}>
+            {currentItems.map((pub, i) => (
+              <Box key={i}>
+                <Text size="sm">{pub.title || '(untitled)'}</Text>
+                <Group gap="xs">
+                  {pub.datePublished && (
+                    <Text size="xs" c="dimmed">{pub.datePublished}</Text>
+                  )}
+                  {pub.doi && (
+                    <Anchor
+                      href={`https://doi.org/${pub.doi}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      size="xs"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                    >
+                      {pub.doi}
+                      <IconExternalLink size={10} style={{ flexShrink: 0 }} />
+                    </Anchor>
+                  )}
+                </Group>
+              </Box>
+            ))}
+          </Stack>
+          <Divider my="sm" variant="dashed" />
+          <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={6}>
+            Add publications
+          </Text>
+        </Box>
+      )}
+
+      <Stack gap="xs">
+        {items.map((item, index) => (
+          <Group key={index} gap="xs" align="flex-end">
+            <Box style={{ flex: 1 }}>
+              <MantineTextInput
+                label={index === 0 && !hasCurrentItems ? 'DOI' : undefined}
+                placeholder="e.g. 10.1000/xyz123"
+                value={item.doi || ''}
+                onChange={(e) => update(index, { doi: e.target.value })}
+                size="sm"
+              />
+            </Box>
+            <ActionIcon
+              color="red"
+              variant="subtle"
+              size="sm"
+              mb={2}
+              onClick={() => removeEntry(index)}
+              disabled={items.length === 1 && !item.doi}
+              title="Remove"
+            >
+              <IconTrash size={14} />
+            </ActionIcon>
+          </Group>
+        ))}
+      </Stack>
+
+      <Button
+        variant="subtle"
+        size="xs"
+        leftSection={<IconPlus size={14} />}
+        onClick={addEntry}
+        style={{ alignSelf: 'flex-start' }}
+      >
+        Add another publication
+      </Button>
+    </Stack>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Change block input switcher
+// ---------------------------------------------------------------------------
 function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
   const { projects } = useProjects();
   const { researchGroups, operationsGroups } = useGroups();
-  const [nameChecks, setNameChecks] = useState({ firstName: false, lastName: false, preferredName: false });
+  const [nameChecks, setNameChecks] = useState({
+    firstName: false,
+    lastName: false,
+    preferredName: false,
+  });
 
   switch (fieldKey) {
     case 'name':
       return (
         <Stack gap="sm">
-          <Text size="sm" c="dimmed">Check the name components you want to update. At least one must be selected.</Text>
+          <Text size="sm" c="dimmed">
+            Check the name components you want to update. At least one must be selected.
+          </Text>
           {[
             { key: 'firstName',     label: 'First Name' },
             { key: 'lastName',      label: 'Last Name' },
-            { key: 'preferredName', label: 'Preferred Name' },
+            { key: 'preferredName', label: 'Preferred Display Name' },
           ].map(({ key, label }) => (
             <Box key={key}>
-              <Checkbox label={label} checked={nameChecks[key]} onChange={(e) => setNameChecks((prev) => ({ ...prev, [key]: e.currentTarget.checked }))} />
+              <Checkbox
+                label={label}
+                checked={nameChecks[key]}
+                onChange={(e) => {
+                  const checked = e.currentTarget.checked;
+                  setNameChecks((prev) => ({ ...prev, [key]: checked }));
+                }}
+              />
               {nameChecks[key] && (
                 <Box pl="xl" mt="xs">
-                  <Controller name={`changes.${index}.value.${key}`} control={control} rules={{ required: `${label} is required when selected.` }}
-                    render={({ field, fieldState }) => <TextInput {...field} label={`New ${label}`} required error={fieldState.error?.message} />}
+                  <Controller
+                    name={`changes.${index}.value.${key}`}
+                    control={control}
+                    rules={{ required: `${label} is required when selected.` }}
+                    render={({ field, fieldState }) => (
+                      <TextInput
+                        {...field}
+                        label={`Updated ${label}`}
+                        required
+                        error={fieldState.error?.message}
+                      />
+                    )}
                   />
                 </Box>
               )}
@@ -77,52 +210,120 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
           ))}
         </Stack>
       );
+
     case 'jobTitle':
       return (
         <Stack gap="xs">
-          {selectedPerson?.jobTitle && <ReadOnlyField label="Current Job Title" value={selectedPerson.jobTitle} />}
-          <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New job title is required.' }}
-            render={({ field, fieldState }) => <TextInput {...field} label="New Job Title" required helperText="Semicolon-separated if multiple titles." error={fieldState.error?.message} />}
+          {selectedPerson?.jobTitle && (
+            <ReadOnlyField label="Current Job Title" value={selectedPerson.jobTitle} />
+          )}
+          <Controller
+            name={`changes.${index}.value`}
+            control={control}
+            rules={{ required: 'New job title is required.' }}
+            render={({ field, fieldState }) => (
+              <TextInput
+                {...field}
+                label="New Job Title"
+                required
+                helperText="Semicolon-separated if multiple titles."
+                error={fieldState.error?.message}
+              />
+            )}
           />
         </Stack>
       );
+
     case 'bio':
       return (
         <Stack gap="xs">
-          {selectedPerson?.bio && <ReadOnlyField label="Current Bio" value={selectedPerson.bio} isHtml />}
-          <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'Bio is required.' }}
-            render={({ field, fieldState }) => <RichTextInput {...field} label="New Bio" required error={fieldState.error?.message} />}
+          {selectedPerson?.bio && (
+            <ReadOnlyField label="Current Bio" value={selectedPerson.bio} isHtml />
+          )}
+          <Controller
+            name={`changes.${index}.value`}
+            control={control}
+            rules={{ required: 'Bio is required.' }}
+            render={({ field, fieldState }) => (
+              <RichTextInput
+                {...field}
+                label="New Bio"
+                required
+                error={fieldState.error?.message}
+              />
+            )}
           />
         </Stack>
       );
+
     case 'renciScholar':
       return (
         <Stack gap="sm">
-          {selectedPerson?.renciScholar !== undefined && <ReadOnlyField label="Current Status" value={selectedPerson.renciScholar ? 'RENCI Scholar: Yes' : 'RENCI Scholar: No'} />}
-          <Controller name={`changes.${index}.value.renciScholar`} control={control}
-            render={({ field }) => <Switch checked={!!field.value} onChange={(e) => field.onChange(e.currentTarget.checked)} label="RENCI Scholar" />}
-          />
-          <Controller name={`changes.${index}.value.renciScholar`} control={control}
-            render={({ field: switchField }) => switchField.value ? (
-              <Controller name={`changes.${index}.value.renciScholarBio`} control={control}
-                render={({ field, fieldState }) => <RichTextInput {...field} label="RENCI Scholar Bio" error={fieldState.error?.message} />}
+          {selectedPerson?.renciScholar !== undefined && (
+            <ReadOnlyField
+              label="Current Status"
+              value={selectedPerson.renciScholar ? 'RENCI Scholar: Yes' : 'RENCI Scholar: No'}
+            />
+          )}
+          <Controller
+            name={`changes.${index}.value.renciScholar`}
+            control={control}
+            render={({ field }) => (
+              <Switch
+                checked={!!field.value}
+                onChange={(e) => field.onChange(e.currentTarget.checked)}
+                label="RENCI Scholar"
               />
-            ) : null}
+            )}
+          />
+          <Controller
+            name={`changes.${index}.value.renciScholar`}
+            control={control}
+            render={({ field: switchField }) =>
+              switchField.value ? (
+                <Controller
+                  name={`changes.${index}.value.renciScholarBio`}
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <RichTextInput
+                      {...field}
+                      label="RENCI Scholar Bio"
+                      error={fieldState.error?.message}
+                    />
+                  )}
+                />
+              ) : null
+            }
           />
         </Stack>
       );
+
     case 'groups': {
       const currentGroupSlugs = (selectedPerson?.groups || []).map((g) => g.slug);
       return (
-        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ add: [], remove: [] }}
+        <Controller
+          name={`changes.${index}.value`}
+          control={control}
+          defaultValue={{ add: [], remove: [] }}
           render={({ field }) => {
             const addValue    = field.value?.add    ?? [];
             const removeValue = field.value?.remove ?? [];
-            const notify      = (patch) => field.onChange({ add: addValue, remove: removeValue, ...patch });
+            const notify      = (patch) =>
+              field.onChange({ add: addValue, remove: removeValue, ...patch });
             const addedSlugs  = new Set(addValue);
             const addOptions  = [
-              { group: 'Research Groups',   items: (researchGroups   || []).filter((g) => !currentGroupSlugs.includes(g.slug) && !addedSlugs.has(g.slug)).map((g) => ({ value: g.slug, label: g.name })) },
-              { group: 'Operations Groups', items: (operationsGroups || []).filter((g) => !currentGroupSlugs.includes(g.slug) && !addedSlugs.has(g.slug)).map((g) => ({ value: g.slug, label: g.name })) },
+              {
+                group: 'Research Groups',
+                items: (researchGroups || [])
+                  .filter((g) => !currentGroupSlugs.includes(g.slug) && !addedSlugs.has(g.slug))
+                  .map((g) => ({ value: g.slug, label: g.name })),
+              },
+              {
+                group: 'Operations Groups',
+                items: (operationsGroups || [])
+                  .filter((g) => !currentGroupSlugs.includes(g.slug) && !addedSlugs.has(g.slug))
+                  .map((g) => ({ value: g.slug, label: g.name })),
+              },
             ];
             return (
               <RelationalFieldEditor
@@ -148,16 +349,21 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
         />
       );
     }
+
     case 'projects': {
       const currentProjects = selectedPerson?.projects || [];
       const currentSlugs    = new Set(currentProjects.map((p) => p.slug));
       const available       = (projects || []).filter((p) => !currentSlugs.has(p.slug));
       return (
-        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ add: [], remove: [] }}
+        <Controller
+          name={`changes.${index}.value`}
+          control={control}
+          defaultValue={{ add: [], remove: [] }}
           render={({ field }) => {
             const addValue    = field.value?.add    ?? [];
             const removeValue = field.value?.remove ?? [];
-            const notify      = (patch) => field.onChange({ add: addValue, remove: removeValue, ...patch });
+            const notify      = (patch) =>
+              field.onChange({ add: addValue, remove: removeValue, ...patch });
             return (
               <RelationalFieldEditor
                 currentLabel="Current projects"
@@ -181,32 +387,76 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
         />
       );
     }
+
     case 'websites':
       return (
-        <Controller name={`changes.${index}.value`} control={control} defaultValue={null}
-          render={({ field }) => <EditableWebsiteList currentItems={selectedPerson?.websites || []} value={field.value?.items || null} onChange={(val) => field.onChange(val)} />}
+        <Controller
+          name={`changes.${index}.value`}
+          control={control}
+          defaultValue={[]}
+          render={({ field }) => (
+            <EditableWebsiteList
+              currentItems={selectedPerson?.websites || []}
+              value={field.value}
+              onChange={field.onChange}
+            />
+          )}
         />
       );
+
+    case 'publications':
+      return (
+        <Controller
+          name={`changes.${index}.value`}
+          control={control}
+          defaultValue={[]}
+          render={({ field }) => (
+            <EditPublications
+              currentItems={selectedPerson?.publications || []}
+              value={field.value}
+              onChange={field.onChange}
+            />
+          )}
+        />
+      );
+
     case 'headshot':
       return (
         <Paper radius="md" p="md" style={{ background: '#f0f7fc', border: '1px solid #bbd6ea' }}>
           <Text size="sm">
             Please upload a new headshot to the shared org folder labeled{' '}
-            <strong>{selectedPerson?.name || '[Person Name]'}</strong>. The implementing team will retrieve it from there.
+            <strong>{selectedPerson?.name || '[Person Name]'}</strong>. The implementing team
+            will retrieve it from there.
           </Text>
         </Paper>
       );
+
     case 'other':
       return (
-        <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'Please describe the change.' }}
-          render={({ field, fieldState }) => <LongTextInput {...field} label="Describe the change" helperText="Use this for edge cases not covered by the options above." required error={fieldState.error?.message} />}
+        <Controller
+          name={`changes.${index}.value`}
+          control={control}
+          rules={{ required: 'Please describe the change.' }}
+          render={({ field, fieldState }) => (
+            <LongTextInput
+              {...field}
+              label="Describe the change"
+              helperText="Use this for edge cases not covered by the options above."
+              required
+              error={fieldState.error?.message}
+            />
+          )}
         />
       );
+
     default:
       return null;
   }
 }
 
+// ---------------------------------------------------------------------------
+// Main form
+// ---------------------------------------------------------------------------
 export default function UpdatePersonForm() {
   const { people, loading: peopleLoading, error: peopleError } = usePeople();
   const [selectedPerson, setSelectedPerson] = useState(null);
@@ -215,11 +465,20 @@ export default function UpdatePersonForm() {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [fieldSelections, setFieldSelections] = useState({});
 
-  const { control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm({
     defaultValues: { submitterEmail: '', slug: '', changes: [] },
   });
 
-  const { fields: changeFields, append, remove } = useFieldArray({ control, name: 'changes' });
+  const { fields: changeFields, append, remove } = useFieldArray({
+    control,
+    name: 'changes',
+  });
 
   const handlePersonSelect = (person) => {
     setSelectedPerson(person);
@@ -231,7 +490,12 @@ export default function UpdatePersonForm() {
   const handleFieldSelect = (index, val) => {
     setFieldSelections((prev) => ({ ...prev, [index]: val }));
     setValue(`changes.${index}.field`, val);
-    const relationalDefaults = { groups: { add: [], remove: [] }, projects: { add: [], remove: [] } };
+    const relationalDefaults = {
+      groups:       { add: [], remove: [] },
+      projects:     { add: [], remove: [] },
+      websites:     [],
+      publications: [],
+    };
     setValue(`changes.${index}.value`, relationalDefaults[val] ?? null);
   };
 
@@ -253,7 +517,10 @@ export default function UpdatePersonForm() {
   const onSubmit = async (data) => {
     setSubmitError(null);
     const validChanges = data.changes.filter((_, i) => fieldSelections[i]);
-    if (validChanges.length === 0) { setSubmitError('Please add at least one change block.'); return; }
+    if (validChanges.length === 0) {
+      setSubmitError('Please add at least one change block.');
+      return;
+    }
 
     const changes = data.changes
       .map((change, i) => {
@@ -268,17 +535,28 @@ export default function UpdatePersonForm() {
       const res = await fetch('/api/people/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ submitterEmail: data.submitterEmail, slug: data.slug, changes }),
+        body: JSON.stringify({
+          submitterEmail: data.submitterEmail,
+          slug: data.slug,
+          changes,
+        }),
       });
 
       if (res.status === 503) {
         const body = await res.json().catch(() => ({}));
-        if (body.code === 'VPN_REQUIRED') { setSubmitError('Could not connect to the data API. Make sure you are connected to the VPN and try again.'); return; }
+        if (body.code === 'VPN_REQUIRED') {
+          setSubmitError(
+            'Could not connect to the data API. Make sure you are connected to the VPN and try again.'
+          );
+          return;
+        }
       }
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setSubmitError(body.errors?.map((e) => e.message).join(', ') || 'Submission failed. Please try again.');
+        setSubmitError(
+          body.errors?.map((e) => e.message).join(', ') || 'Submission failed. Please try again.'
+        );
         return;
       }
 
@@ -291,18 +569,22 @@ export default function UpdatePersonForm() {
     }
   };
 
-  const modalFields = selectedPerson ? [
-    { label: 'Name',              value: selectedPerson.name },
-    { label: 'Slug',              value: selectedPerson.slug },
-    { label: 'Active',            value: selectedPerson.active === true ? 'Yes' : selectedPerson.active === false ? 'No' : null },
-    { label: 'Job Title',         value: selectedPerson.jobTitle },
-    { label: 'Groups',            value: (selectedPerson.groups || []).sort((a, b) => a.name.localeCompare(b.name)).map((g) => g.name).join(', ') || null },
-    { label: 'RENCI Scholar',     value: selectedPerson.renciScholar ? 'Yes' : 'No' },
-    { label: 'RENCI Scholar Bio', value: selectedPerson.renciScholarBio, isHtml: true },
-    { label: 'Projects',          value: (selectedPerson.projects || []).sort((a, b) => a.name.localeCompare(b.name)).map((p) => p.name).join(', ') || null },
-    { label: 'Bio',               value: selectedPerson.bio, isHtml: true },
-    { label: 'Websites',          value: selectedPerson.websites, isWebsites: true },
-  ] : [];
+  // TODO: Modal is getting long — consider a tabbed or sectioned layout post-launch.
+  const modalFields = selectedPerson
+    ? [
+        { label: 'Name',              value: selectedPerson.name },
+        { label: 'Slug',              value: selectedPerson.slug },
+        { label: 'Active',            value: selectedPerson.active === true ? 'Yes' : selectedPerson.active === false ? 'No' : null },
+        { label: 'Job Title',         value: selectedPerson.jobTitle },
+        { label: 'Groups',            value: (selectedPerson.groups || []).sort((a, b) => a.name.localeCompare(b.name)).map((g) => g.name).join(', ') || null },
+        { label: 'RENCI Scholar',     value: selectedPerson.renciScholar ? 'Yes' : 'No' },
+        { label: 'RENCI Scholar Bio', value: selectedPerson.renciScholarBio, isHtml: true },
+        { label: 'Projects',          value: (selectedPerson.projects || []).sort((a, b) => a.name.localeCompare(b.name)).map((p) => p.name).join(', ') || null },
+        { label: 'Bio',               value: selectedPerson.bio, isHtml: true },
+        { label: 'Websites',          value: selectedPerson.websites, isWebsites: true },
+        { label: 'Publications',      value: selectedPerson.publications, isPublications: true },
+      ]
+    : [];
 
   if (submitSuccess) {
     return <FormSuccessState onReset={() => setSubmitSuccess(false)} />;
@@ -313,17 +595,34 @@ export default function UpdatePersonForm() {
       <Stack gap="xl">
         <Box>
           <Title order={4} mb="sm">Identify the Person</Title>
+          <FormIntro variant="update-person" />
+          
           <Stack gap="sm">
             {peopleError ? (
-              <Alert color="red">Could not load people. Make sure you are connected to the VPN.</Alert>
+              <Alert color="red">
+                Could not load people. Make sure you are connected to the VPN.
+              </Alert>
             ) : (
               <>
                 <Group gap="sm" align="flex-end">
                   <Box style={{ flex: 1 }}>
-                    <AutocompleteField label="Person" required data={people || []} value={selectedPerson} onChange={handlePersonSelect} loading={peopleLoading} />
+                    <AutocompleteField
+                      label="Person"
+                      required
+                      data={people || []}
+                      value={selectedPerson}
+                      onChange={handlePersonSelect}
+                      loading={peopleLoading}
+                    />
                   </Box>
                   {selectedPerson && (
-                    <ActionIcon variant="subtle" size="lg" mb={1} onClick={() => setModalOpen(true)} title="View current person data">
+                    <ActionIcon
+                      variant="subtle"
+                      size="lg"
+                      mb={1}
+                      onClick={() => setModalOpen(true)}
+                      title="View current person data"
+                    >
                       <IconEye size={18} />
                     </ActionIcon>
                   )}
@@ -345,23 +644,52 @@ export default function UpdatePersonForm() {
             <Divider />
             <Box>
               <Title order={4} mb="xs">Declare Changes</Title>
-              <Text size="sm" c="dimmed" mb="md">Add one block per change. Each block becomes a separate action item on the ticket.</Text>
+              <Text size="sm" c="dimmed" mb="md">
+                Add one block per change. Each block becomes a separate action item on the ticket.
+              </Text>
               <Stack gap="md">
                 {changeFields.map((item, index) => (
                   <Paper key={item.id} withBorder p="md" radius="sm">
                     <Stack gap="sm">
                       <Group justify="space-between" align="center">
                         <Text size="sm" fw={500}>Change {index + 1}</Text>
-                        <ActionIcon color="red" variant="subtle" size="sm" onClick={() => removeChangeBlock(index)}><IconTrash size={14} /></ActionIcon>
+                        <ActionIcon
+                          color="red"
+                          variant="subtle"
+                          size="sm"
+                          onClick={() => removeChangeBlock(index)}
+                        >
+                          <IconTrash size={14} />
+                        </ActionIcon>
                       </Group>
-                      <Select label="What are you changing?" placeholder="Select a field" data={FIELD_OPTIONS} value={fieldSelections[index] || null} onChange={(val) => handleFieldSelect(index, val)} required />
+                      <Select
+                        label="What are you changing?"
+                        placeholder="Select a field"
+                        data={FIELD_OPTIONS}
+                        value={fieldSelections[index] || null}
+                        onChange={(val) => handleFieldSelect(index, val)}
+                        required
+                      />
                       {fieldSelections[index] && (
-                        <ChangeBlockInput key={fieldSelections[index]} fieldKey={fieldSelections[index]} control={control} index={index} selectedPerson={selectedPerson} />
+                        <ChangeBlockInput
+                          key={fieldSelections[index]}
+                          fieldKey={fieldSelections[index]}
+                          control={control}
+                          index={index}
+                          selectedPerson={selectedPerson}
+                        />
                       )}
                     </Stack>
                   </Paper>
                 ))}
-                <Button variant="light" leftSection={<IconPlus size={16} />} onClick={addChangeBlock} style={{ alignSelf: 'flex-start' }}>Add change</Button>
+                <Button
+                  variant="light"
+                  leftSection={<IconPlus size={16} />}
+                  onClick={addChangeBlock}
+                  style={{ alignSelf: 'flex-start' }}
+                >
+                  Add change
+                </Button>
                 {submitError && <Alert color="red" mt="xs">{submitError}</Alert>}
               </Stack>
             </Box>
@@ -369,7 +697,9 @@ export default function UpdatePersonForm() {
             <Divider />
 
             <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
-            <Button type="submit" loading={isSubmitting} fullWidth>Submit Update Request</Button>
+            <Button type="submit" loading={isSubmitting} fullWidth>
+              Submit Update Request
+            </Button>
           </>
         )}
       </Stack>
