@@ -12,10 +12,12 @@ import { sanitizeHtml } from '../../utils/sanitizeHtml';
  * Field shape:
  *   { label, value }                - Plain text (null/empty renders as "—")
  *   { label, value, isHtml }        - Renders value as sanitized HTML
- *   { label, value, isWebsites }    - Renders value as a bulleted hyperlink list.
+ *   { label, value, isWebsites }    - Renders value as bulleted hyperlink list.
  *                                     value must be an array of { url, type? } objects.
- *   { label, value, isPublications }- Renders value as a list of title + date + DOI.
+ *   { label, value, isPublications }- Renders value as list of title + date + DOI.
  *                                     value must be an array of publication objects.
+ *   { label, value, isList }        - Renders value as bulleted list using item.name.
+ *                                     value must be an array of { name, ... } objects.
  *
  * TODO: Modal is getting long for people with many publications/projects.
  * Consider a tabbed or sectioned layout post-launch.
@@ -24,13 +26,15 @@ export default function CurrentDataModal({ opened, onClose, title, fields = [] }
   return (
     <Modal opened={opened} onClose={onClose} title={title} size="lg">
       <Stack gap="sm">
-        {fields.map(({ label, value, isHtml, isWebsites, isPublications }) => (
+        {fields.map(({ label, value, isHtml, isWebsites, isPublications, isList }) => (
           <Box key={label}>
             <Text size="xs" c="dimmed" fw={500} tt="uppercase" lts={0.5} mb={2}>
               {label}
             </Text>
 
-            {isPublications ? (
+            {isList ? (
+              <NameList items={value} />
+            ) : isPublications ? (
               <PublicationList items={value} />
             ) : isWebsites ? (
               <WebsiteList items={value} />
@@ -57,6 +61,24 @@ function HtmlValue({ value }) {
       style={{ fontSize: '0.875rem' }}
       dangerouslySetInnerHTML={{ __html: sanitizeHtml(value) }}
     />
+  );
+}
+
+function NameList({ items }) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return <Text size="sm" c="dimmed">—</Text>;
+  }
+  const sorted = [...items].sort((a, b) =>
+    (a.name || '').localeCompare(b.name || '')
+  );
+  return (
+    <List size="sm" spacing={2}>
+      {sorted.map((item, i) => (
+        <List.Item key={i}>
+          <Text size="sm">{item.name || item.slug || '(unnamed)'}</Text>
+        </List.Item>
+      ))}
+    </List>
   );
 }
 
@@ -94,14 +116,7 @@ function PublicationList({ items }) {
         <List.Item key={i}>
           <Text size="sm">{pub.title || '(untitled)'}</Text>
           <Text size="xs" c="dimmed">
-            {[
-              pub.datePublished,
-              pub.doi
-                ? null // rendered as link below
-                : null,
-            ]
-              .filter(Boolean)
-              .join(' · ')}
+            {pub.datePublished ? `${pub.datePublished}` : ''}
             {pub.datePublished && pub.doi ? ' · ' : ''}
             {pub.doi && (
               <Anchor

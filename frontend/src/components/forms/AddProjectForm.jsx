@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import {
   Stack,
   Group,
@@ -42,6 +43,7 @@ function groupLabel(group) {
 }
 
 export default function AddProjectForm() {
+  const navigate = useNavigate();
   const { people, loading: peopleLoading } = usePeople();
   const { researchGroups, operationsGroups, loading: groupsLoading } = useGroups();
   const { organizations, loading: orgsLoading } = useOrganizations();
@@ -57,9 +59,9 @@ export default function AddProjectForm() {
     },
   ];
 
-  const [submitStatus, setSubmitStatus] = useState(null);
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const {
     control,
@@ -83,7 +85,6 @@ export default function AddProjectForm() {
 
   const onSubmit = async (data) => {
     setSubmitting(true);
-    setSubmitStatus(null);
     setSubmitError('');
 
     const payload = {
@@ -100,7 +101,6 @@ export default function AddProjectForm() {
 
       if (res.status === 503) {
         setSubmitError("Unable to reach the data server. Please make sure you're connected to the VPN and try again.");
-        setSubmitStatus('error');
         return;
       }
 
@@ -109,36 +109,28 @@ export default function AddProjectForm() {
         setSubmitError(
           body?.errors?.map((e) => e.message).join(', ') || `Submission failed (${res.status})`
         );
-        setSubmitStatus('error');
         return;
       }
 
-      setSubmitStatus('success');
-      reset();
+      navigate('/');
     } catch {
       setSubmitError("Unable to reach the data server. Please make sure you're connected to the VPN and try again.");
-      setSubmitStatus('error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (submitStatus === 'success') {
-    return <FormSuccessState onReset={() => setSubmitStatus(null)} />;
-  }
+  if (submitSuccess) return <FormSuccessState />;
 
   return (
     <Stack gap="xl">
       <div>
         <Title order={3}>Add Project</Title>
-        <Text c="dimmed" size="sm" mt={4}>
-          Submit a request to add a new project to the RENCI website.
-        </Text>
       </div>
 
       <FormIntro variant="add-project" />
 
-      {submitStatus === 'error' && (
+      {submitError && (
         <Alert
           icon={<IconAlertCircle size={18} />}
           title="Submission failed"
@@ -175,7 +167,7 @@ export default function AddProjectForm() {
               <TextInput
                 {...field}
                 label="Preferred Slug"
-                helperText={`A slug is the URL identifier for this page — e.g. "my-project-name" in renci.org/project/my-project-name. Leave blank and the team will generate one. Must be approved before going live.`}
+                helperText='A slug is the URL identifier for this page — e.g. "my-project-name" in renci.org/project/my-project-name. Leave blank and the team will generate one. Must be approved before going live.'
                 error={errors.slug?.message}
               />
             )}
@@ -245,7 +237,7 @@ export default function AddProjectForm() {
                 placeholder={peopleLoading ? 'Loading people…' : 'Search by name…'}
                 disabled={peopleLoading}
                 error={errors.people?.message}
-                helperText="Search for existing staff members."
+                helperText="Search for existing staff members. Free text accepted if no match found."
               />
             )}
           />
@@ -261,6 +253,7 @@ export default function AddProjectForm() {
                 placeholder={orgsLoading ? 'Loading organizations…' : 'Search or type and press Enter…'}
                 disabled={orgsLoading}
                 error={errors.fundingOrgs?.message}
+                helperText="Search for existing organizations. Free text accepted if no match found."
               />
             )}
           />
@@ -276,6 +269,7 @@ export default function AddProjectForm() {
                 placeholder={orgsLoading ? 'Loading organizations…' : 'Search or type and press Enter…'}
                 disabled={orgsLoading}
                 error={errors.partnerOrgs?.message}
+                helperText="Search for existing organizations. Free text accepted if no match found."
               />
             )}
           />

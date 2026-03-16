@@ -1,31 +1,32 @@
 /**
  * Monday.com API Service
  *
- * Column IDs (from POC — sourced from environment variables, never hardcoded):
+ * Column IDs (sourced from environment variables, never hardcoded):
  *
  * Parent item columns:
- *   MONDAY_COL_STATUS              = status
- *   MONDAY_COL_DATE                = date4
- *   MONDAY_COL_CONTENT_TYPE        = dropdown_mm0gr94s
- *   MONDAY_COL_DESCRIPTION         = long_text_mm0gwxya
- *   MONDAY_COL_ITEM_NAME           = text_mm0ghppz
- *   MONDAY_COL_ASSIGNED_PERSON     = person
- *   MONDAY_COL_SUBMITTER_EMAIL     = email_mm1bgmaj
+ *   MONDAY_COL_STATUS           — item status (New, In Review, In Sprint, etc.)
+ *   MONDAY_COL_DATE             — date submitted
+ *   MONDAY_COL_CONTENT_TYPE     — dropdown: Project / Person
+ *   MONDAY_COL_OPERATION        — dropdown: Add / Update / Archive
+ *   MONDAY_COL_ITEM_NAME        — name of the entity being changed (e.g. "Suejin Kim", "iRODS")
+ *   MONDAY_COL_DESCRIPTION      — structured summary of submission (feeds confirmation email automation)
+ *   MONDAY_COL_ASSIGNED_PERSON  — web team member assigned to ticket (set manually)
+ *   MONDAY_COL_SUBMITTER_EMAIL  — email of the person who submitted the request
+ *   MONDAY_COL_WORDPRESS_LINK   — live page URL (set by web team before marking Complete)
+ *   MONDAY_COL_DUE_DATE         — due date (set by web team during triage)
  *
  * Subitem columns:
- *   (not yet defined — column IDs to be determined during RN-192 board audit)
+ *   MONDAY_SUBITEM_COL_CONTENT  — full untruncated text for long fields (bio, description, etc.)
+ *                                  for web team reference; not included in email automations
  *
  * Board IDs:
- *   MONDAY_BOARD_ID                — single board for all submissions (Projects + People)
+ *   MONDAY_BOARD_ID             — single board for all submissions (Projects + People)
  */
 
 const MONDAY_API_URL = 'https://api.monday.com/v2';
 
 /**
  * Execute a GraphQL query/mutation against the Monday.com API.
- * @param {string} query - GraphQL query or mutation string
- * @param {object} variables - GraphQL variables
- * @returns {object} - Parsed response data
  */
 async function mondayFetch(query, variables = {}) {
   const apiKey = process.env.MONDAY_API_KEY;
@@ -36,9 +37,9 @@ async function mondayFetch(query, variables = {}) {
   const response = await fetch(MONDAY_API_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type':  'application/json',
       'Authorization': apiKey,
-      'API-Version': '2023-10',
+      'API-Version':   '2023-10',
     },
     body: JSON.stringify({ query, variables }),
   });
@@ -60,11 +61,6 @@ async function mondayFetch(query, variables = {}) {
 
 /**
  * Create a parent item on a Monday.com board.
- *
- * @param {string|number} boardId - The board ID (use env var MONDAY_BOARD_ID)
- * @param {string} itemName - The item name (e.g. "Add Project - My Project Name")
- * @param {object} columnValues - Key/value map of column IDs to column value objects
- * @returns {{ id: string }} - The created item's ID
  */
 export async function createItem(boardId, itemName, columnValues = {}) {
   const query = `
@@ -79,29 +75,19 @@ export async function createItem(boardId, itemName, columnValues = {}) {
     }
   `;
 
-  const variables = {
-    boardId: String(boardId),
+  const data = await mondayFetch(query, {
+    boardId:      String(boardId),
     itemName,
     columnValues: JSON.stringify(columnValues),
-  };
+  });
 
-  const data = await mondayFetch(query, variables);
   const id = data?.create_item?.id;
-
-  if (!id) {
-    throw new Error('Monday.com createItem: no item ID returned in response');
-  }
-
+  if (!id) throw new Error('Monday.com createItem: no item ID returned in response');
   return { id };
 }
 
 /**
  * Create a subitem under an existing Monday.com parent item.
- *
- * @param {string|number} parentItemId - The parent item's ID
- * @param {string} itemName - The subitem name / action label
- * @param {object} columnValues - Key/value map of subitem column IDs to column value objects
- * @returns {{ id: string }} - The created subitem's ID
  */
 export async function createSubitem(parentItemId, itemName, columnValues = {}) {
   const query = `
@@ -116,18 +102,13 @@ export async function createSubitem(parentItemId, itemName, columnValues = {}) {
     }
   `;
 
-  const variables = {
+  const data = await mondayFetch(query, {
     parentItemId: String(parentItemId),
     itemName,
     columnValues: JSON.stringify(columnValues),
-  };
+  });
 
-  const data = await mondayFetch(query, variables);
   const id = data?.create_subitem?.id;
-
-  if (!id) {
-    throw new Error('Monday.com createSubitem: no subitem ID returned in response');
-  }
-
+  if (!id) throw new Error('Monday.com createSubitem: no subitem ID returned in response');
   return { id };
 }

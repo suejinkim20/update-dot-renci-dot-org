@@ -7,6 +7,29 @@ import { createItem, createSubitem } from '../services/monday.js';
 
 const router = express.Router();
 
+const TRUNCATE_LENGTH = 300;
+
+function truncate(text, label) {
+  if (!text) return null;
+  if (text.length <= TRUNCATE_LENGTH) return text;
+  return `${text.slice(0, TRUNCATE_LENGTH)}...\n(Reply to this email for the full ${label}.)`;
+}
+
+function formatList(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return 'None provided';
+  return arr
+    .map((v) => (typeof v === 'object' && v !== null ? v.name ?? v.slug : String(v)))
+    .join(', ');
+}
+
+function formatWebsites(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return null;
+  return arr.map((w) => {
+    const type = w.type ? `${w.type}: ` : '';
+    return `- ${type}${w.url}`;
+  }).join('\n');
+}
+
 // ── GET /api/projects ─────────────────────────────────────────────────────────
 router.get('/', async (req, res) => {
   try {
@@ -43,80 +66,105 @@ router.post('/', async (req, res) => {
 
   try {
     const boardId = process.env.MONDAY_BOARD_ID;
-    const today = new Date().toISOString().slice(0, 10);
+    const today   = new Date().toISOString().slice(0, 10);
 
-    const formatList = (arr) => {
-      if (!Array.isArray(arr) || arr.length === 0) return 'None provided';
-      return arr
-        .map((v) => (typeof v === 'object' && v !== null ? v.name ?? v.slug : v))
-        .join(', ');
-    };
+    const descTruncated     = truncate(description, 'description');
+    const renciRoleTruncated = truncate(renciRole, "RENCI's Role");
+    const websiteLines      = formatWebsites(websites);
+    const peopleList        = formatList(people);
+    const fundingList       = formatList(fundingOrgs);
+    const partnerList       = formatList(partnerOrgs);
 
-    const formatWebsites = (arr) => {
-      if (!Array.isArray(arr) || arr.length === 0) return 'None provided';
-      return arr.map((w) => {
-        const type = w.type ? `${w.type}: ` : '';
-        return `${type}${w.url}`;
-      }).join('\n');
-    };
-
-    const descriptionText = [
-      `New project requested by ${submitterEmail}.`,
+    // ── Build description ─────────────────────────────────────────────────
+    const descriptionLines = [
+      `New project request submitted by ${submitterEmail}.`,
       '',
+      'PROJECT',
       `Name: ${name || 'Not provided'}`,
       `Slug suggestion: ${slug?.trim() || 'None — team will generate'}`,
       `Owning Group: ${owningGroup || 'Not provided'}`,
-      '',
-      `Description:\n${description || 'Not provided'}`,
-      '',
-      `RENCI's Role:\n${renciRole || 'Not provided'}`,
-      '',
-      `Contributors: ${formatList(people)}`,
-      `Funding Organizations: ${formatList(fundingOrgs)}`,
-      `Partner Organizations: ${formatList(partnerOrgs)}`,
-      '',
-      `Websites:\n${formatWebsites(websites)}`,
-    ].join('\n');
+    ];
 
+    if (descTruncated || renciRoleTruncated) {
+      descriptionLines.push('');
+      descriptionLines.push('CONTENT');
+      if (descTruncated) {
+        descriptionLines.push(`Description:\n${descTruncated}`);
+      }
+      if (renciRoleTruncated) {
+        descriptionLines.push(`RENCI's Role:\n${renciRoleTruncated}`);
+      }
+    }
+
+    const hasConnections = peopleList !== 'None provided' ||
+      fundingList !== 'None provided' ||
+      partnerList !== 'None provided' ||
+      websiteLines;
+
+    if (hasConnections) {
+      descriptionLines.push('');
+      descriptionLines.push('CONNECTIONS');
+      if (peopleList  !== 'None provided') descriptionLines.push(`Contributors: ${peopleList}`);
+      if (fundingList !== 'None provided') descriptionLines.push(`Funding Organizations: ${fundingList}`);
+      if (partnerList !== 'None provided') descriptionLines.push(`Partner Organizations: ${partnerList}`);
+      if (websiteLines) descriptionLines.push(`Websites:\n${websiteLines}`);
+    }
+
+    const descriptionText = descriptionLines.join('\n');
+
+    // ── Column values ─────────────────────────────────────────────────────
     const columnValues = {
       [process.env.MONDAY_COL_STATUS]:          { label: 'New' },
       [process.env.MONDAY_COL_DATE]:            { date: today },
       [process.env.MONDAY_COL_CONTENT_TYPE]:    { labels: ['Project'] },
+      [process.env.MONDAY_COL_OPERATION]:       { labels: ['Add'] },
+      [process.env.MONDAY_COL_ITEM_NAME]:       { text: name?.trim() || '(unnamed)' },
       [process.env.MONDAY_COL_DESCRIPTION]:     { text: descriptionText },
       [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
     };
 
-    const itemName = `Add Project - ${name?.trim() || '(unnamed)'}`;
-    const item = await createItem(boardId, itemName, columnValues);
+    const item = await createItem(
+      boardId,
+      `Add Project - ${name?.trim() || '(unnamed)'}`,
+      columnValues
+    );
 
+    // ── Subitems — one per submitted field ────────────────────────────────
     const subitems = [];
 
-    // Required to publish — flag if missing
-    const publishRequired = [
-      { key: name,        label: 'Project Name' },
-      { key: owningGroup, label: 'Owning Group' },
-      { key: description, label: 'Description' },
-      { key: renciRole,   label: "RENCI's Role" },
-    ];
-    for (const { key, label } of publishRequired) {
-      if (!key || (typeof key === 'string' && key.trim() === '')) {
-        subitems.push(`Follow up: ${label} not provided — required before publishing`);
+    if (name)       subitems.push({ title: `Name: ${name}`, content: null });
+    if (slug?.trim()) subitems.push({ title: `Slug suggestion: ${slug}`, content: null });
+    if (owningGroup) subitems.push({ title: `Owning Group: ${owningGroup}`, content: null });
+    if (description) subitems.push({ title: 'Add Description', content: description });
+    if (renciRole)   subitems.push({ title: "Add RENCI's Role", content: renciRole });
+
+    if (Array.isArray(people) && people.length > 0) {
+      subitems.push({ title: `Contributors: ${formatList(people)}`, content: null });
+    }
+    if (Array.isArray(fundingOrgs) && fundingOrgs.length > 0) {
+      for (const org of fundingOrgs) {
+        const orgName = typeof org === 'object' ? org.name ?? org.slug : org;
+        subitems.push({ title: `Add Funding Organization: ${orgName}`, content: null });
+      }
+    }
+    if (Array.isArray(partnerOrgs) && partnerOrgs.length > 0) {
+      for (const org of partnerOrgs) {
+        const orgName = typeof org === 'object' ? org.name ?? org.slug : org;
+        subitems.push({ title: `Add Partner Organization: ${orgName}`, content: null });
+      }
+    }
+    if (Array.isArray(websites) && websites.length > 0) {
+      for (const w of websites) {
+        const type = w.type ? `${w.type} — ` : '';
+        subitems.push({ title: `Add Website: ${type}${w.url}`, content: null });
       }
     }
 
-    // Important but not publish-blocking
-    const importantFields = [
-      { key: Array.isArray(people)      && people.length > 0,      label: 'Contributors' },
-      { key: Array.isArray(fundingOrgs) && fundingOrgs.length > 0, label: 'Funding Organizations' },
-      { key: Array.isArray(partnerOrgs) && partnerOrgs.length > 0, label: 'Partner Organizations' },
-      { key: slug?.trim(),                                          label: 'Slug' },
-    ];
-    for (const { key, label } of importantFields) {
-      if (!key) subitems.push(`Follow up: ${label} not provided`);
-    }
-
-    for (const subitemName of subitems) {
-      await createSubitem(item.id, subitemName, {});
+    for (const { title, content } of subitems) {
+      const subitemColumnValues = content
+        ? { [process.env.MONDAY_SUBITEM_COL_CONTENT]: { text: content } }
+        : {};
+      await createSubitem(item.id, title, subitemColumnValues);
     }
 
     return res.status(200).json({ success: true, itemId: item.id });
@@ -136,41 +184,47 @@ router.post('/update', async (req, res) => {
     return res.status(400).json({ errors: result.errors });
   }
 
-  const { submitterEmail, slug, changes } = req.body;
-
-  const changeSummary = changes
-    .map((c) => `${c.label || c.field}:\n${formatChangeValue(c.value)}`)
-    .join('\n\n');
-
-  const descriptionText = [
-    `Update request submitted by ${submitterEmail}.`,
-    `Project: ${slug}`,
-    '',
-    'Requested changes:',
-    changeSummary,
-  ].join('\n');
-
-  const columnValues = {
-    [process.env.MONDAY_COL_STATUS]:          { label: 'New' },
-    [process.env.MONDAY_COL_DATE]:            { date: new Date().toISOString().slice(0, 10) },
-    [process.env.MONDAY_COL_CONTENT_TYPE]:    { labels: ['Project'] },
-    [process.env.MONDAY_COL_DESCRIPTION]:     { text: descriptionText },
-    [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
-  };
+  const { submitterEmail, slug, name, changes } = req.body;
+  const displayName = name || slug;
 
   try {
+    const subitems = buildProjectUpdateSubitems(changes);
+
+    const changeLines = subitems.map((s) => `- ${s.title}`).join('\n');
+
+    const descriptionText = [
+      `Update request submitted by ${submitterEmail}.`,
+      '',
+      'PROJECT',
+      `Name: ${displayName}`,
+      `Slug: ${slug}`,
+      '',
+      'CHANGES',
+      changeLines,
+    ].join('\n');
+
+    const columnValues = {
+      [process.env.MONDAY_COL_STATUS]:          { label: 'New' },
+      [process.env.MONDAY_COL_DATE]:            { date: new Date().toISOString().slice(0, 10) },
+      [process.env.MONDAY_COL_CONTENT_TYPE]:    { labels: ['Project'] },
+      [process.env.MONDAY_COL_OPERATION]:       { labels: ['Update'] },
+      [process.env.MONDAY_COL_ITEM_NAME]:       { text: displayName },
+      [process.env.MONDAY_COL_DESCRIPTION]:     { text: descriptionText },
+      [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
+    };
+
     const item = await createItem(
       process.env.MONDAY_BOARD_ID,
-      `Update Project - ${slug}`,
+      `Update Project - ${displayName}`,
       columnValues
     );
 
-    await Promise.all(
-      changes.map((change) => {
-        const subitemName = `${change.label || change.field}: ${summarizeValue(change.value)}`;
-        return createSubitem(item.id, subitemName, {});
-      })
-    );
+    for (const { title, content } of subitems) {
+      const subitemColumnValues = content
+        ? { [process.env.MONDAY_SUBITEM_COL_CONTENT]: { text: content } }
+        : {};
+      await createSubitem(item.id, title, subitemColumnValues);
+    }
 
     return res.status(201).json({ success: true, itemId: item.id });
   } catch (err) {
@@ -190,29 +244,38 @@ router.post('/archive', async (req, res) => {
   }
 
   const { submitterEmail, slug, name, reason } = req.body;
+  const displayName = name || slug;
 
   try {
     const boardId = process.env.MONDAY_BOARD_ID;
-    const today = new Date().toISOString().slice(0, 10);
+    const today   = new Date().toISOString().slice(0, 10);
 
     const descriptionText = [
       `Archive request submitted by ${submitterEmail}.`,
       '',
-      `Project: ${name || slug}`,
+      'PROJECT',
+      `Name: ${displayName}`,
       `Slug: ${slug}`,
       '',
-      `Reason: ${reason}`,
+      'REASON',
+      reason,
     ].join('\n');
 
     const columnValues = {
       [process.env.MONDAY_COL_STATUS]:          { label: 'New' },
       [process.env.MONDAY_COL_DATE]:            { date: today },
       [process.env.MONDAY_COL_CONTENT_TYPE]:    { labels: ['Project'] },
+      [process.env.MONDAY_COL_OPERATION]:       { labels: ['Archive'] },
+      [process.env.MONDAY_COL_ITEM_NAME]:       { text: displayName },
       [process.env.MONDAY_COL_DESCRIPTION]:     { text: descriptionText },
       [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
     };
 
-    const item = await createItem(boardId, `Archive Project - ${name?.trim() || slug}`, columnValues);
+    const item = await createItem(
+      boardId,
+      `Archive Project - ${displayName}`,
+      columnValues
+    );
 
     return res.status(200).json({ success: true, itemId: item.id });
   } catch (err) {
@@ -226,32 +289,94 @@ router.post('/archive', async (req, res) => {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function formatChangeValue(value) {
-  if (Array.isArray(value)) {
-    if (value.length === 0) return '(none)';
-    return value
-      .map((v) => (typeof v === 'object' ? v.name || v.url || v.doi || JSON.stringify(v) : String(v)))
-      .join(', ');
-  }
-  if (typeof value === 'object' && value !== null) {
-    if ('add' in value || 'remove' in value) {
-      const parts = [];
-      if (value.remove?.length) {
-        parts.push(`Remove: ${value.remove.join(', ')}`);
-      }
-      if (value.add?.length) {
-        parts.push(`Add: ${formatChangeValue(value.add)}`);
-      }
-      return parts.length ? parts.join('\n') : '(no changes)';
-    }
-    return value.name || value.url || value.doi || JSON.stringify(value);
-  }
-  return String(value ?? '');
-}
+function buildProjectUpdateSubitems(changes) {
+  const subitems = [];
 
-function summarizeValue(value) {
-  const full = formatChangeValue(value);
-  return full.length > 80 ? full.slice(0, 77) + '...' : full;
+  for (const { field, label, value } of changes) {
+    switch (field) {
+      case 'name':
+        subitems.push({ title: `Update Name: ${value}`, content: null });
+        break;
+
+      case 'owningGroup':
+        subitems.push({ title: `Update Owning Group: ${value}`, content: null });
+        break;
+
+      case 'description':
+        subitems.push({ title: 'Update Description', content: value || null });
+        break;
+
+      case 'renciRole':
+        subitems.push({ title: "Update RENCI's Role", content: value || null });
+        break;
+
+      case 'people': {
+        const adds    = value?.add    || [];
+        const removes = value?.remove || [];
+        for (const s of removes) {
+          subitems.push({ title: `Remove Contributor: ${typeof s === 'object' ? s.name || s.slug : s}`, content: null });
+        }
+        for (const s of adds) {
+          subitems.push({ title: `Add Contributor: ${typeof s === 'object' ? s.name || s.slug : s}`, content: null });
+        }
+        break;
+      }
+
+      case 'fundingOrgs': {
+        const adds    = value?.add    || [];
+        const removes = value?.remove || [];
+        for (const s of removes) {
+          subitems.push({ title: `Remove Funding Organization: ${typeof s === 'object' ? s.name || s.slug : s}`, content: null });
+        }
+        for (const org of adds) {
+          const orgName = org.officialName || org.name || org.slug || org;
+          const short   = org.shortName ? ` (${org.shortName})` : '';
+          const url     = org.url ? ` — ${org.url}` : '';
+          subitems.push({ title: `Add Funding Organization: ${orgName}${short}${url}`, content: null });
+        }
+        break;
+      }
+
+      case 'partnerOrgs': {
+        const adds    = value?.add    || [];
+        const removes = value?.remove || [];
+        for (const s of removes) {
+          subitems.push({ title: `Remove Partner Organization: ${typeof s === 'object' ? s.name || s.slug : s}`, content: null });
+        }
+        for (const org of adds) {
+          const orgName = org.officialName || org.name || org.slug || org;
+          const short   = org.shortName ? ` (${org.shortName})` : '';
+          const url     = org.url ? ` — ${org.url}` : '';
+          subitems.push({ title: `Add Partner Organization: ${orgName}${short}${url}`, content: null });
+        }
+        break;
+      }
+
+      case 'websites': {
+        const entries = Array.isArray(value) ? value : [];
+        for (const w of entries) {
+          const type = w.type ? `${w.type} — ` : '';
+          subitems.push({ title: `Add Website: ${type}${w.url}`, content: null });
+        }
+        break;
+      }
+
+      case 'other':
+        subitems.push({
+          title:   `Other: ${typeof value === 'string' ? value.slice(0, 80) : 'see content'}`,
+          content: typeof value === 'string' && value.length > 80 ? value : null,
+        });
+        break;
+
+      default:
+        subitems.push({
+          title:   `${label || field}: ${typeof value === 'string' ? value.slice(0, 80) : 'see content'}`,
+          content: null,
+        });
+    }
+  }
+
+  return subitems;
 }
 
 export default router;

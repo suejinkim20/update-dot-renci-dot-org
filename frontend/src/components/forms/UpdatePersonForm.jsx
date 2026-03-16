@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -17,8 +18,6 @@ import {
   Alert,
   Paper,
   Checkbox,
-  Anchor,
-  TextInput as MantineTextInput,
 } from '@mantine/core';
 import { IconEye, IconPlus, IconTrash, IconExternalLink } from '@tabler/icons-react';
 import {
@@ -36,7 +35,6 @@ import CurrentDataModal from '../form-blocks/CurrentDataModal';
 import EditableWebsiteList from '../form-blocks/EditableWebsiteList';
 import RelationalFieldEditor from '../form-blocks/RelationalFieldEditor';
 import FormIntro from '../form-blocks/FormIntro';
-
 import { usePeople } from '../../hooks/usePeople';
 import { useProjects } from '../../hooks/useProjects';
 import { useGroups } from '../../hooks/useGroups';
@@ -56,21 +54,13 @@ const FIELD_OPTIONS = [
 
 // ---------------------------------------------------------------------------
 // Publications repeatable editor
-// Same UI pattern as EditableWebsiteList — one row per entry, each with a
-// DOI field. Staff add DOIs for new publications; the implementing team
-// resolves and links them in WordPress.
 // ---------------------------------------------------------------------------
 function EditPublications({ currentItems = [], value, onChange }) {
   const emptyEntry = () => ({ doi: '' });
   const items = Array.isArray(value) && value.length > 0 ? value : [emptyEntry()];
 
-  const update = (index, patch) => {
-    const next = items.map((item, i) => (i === index ? { ...item, ...patch } : item));
-    onChange(next);
-  };
-
-  const addEntry = () => onChange([...items, emptyEntry()]);
-
+  const update    = (index, patch) => onChange(items.map((item, i) => i === index ? { ...item, ...patch } : item));
+  const addEntry  = () => onChange([...items, emptyEntry()]);
   const removeEntry = (index) => {
     const next = items.filter((_, i) => i !== index);
     onChange(next.length > 0 ? next : [emptyEntry()]);
@@ -90,42 +80,50 @@ function EditPublications({ currentItems = [], value, onChange }) {
               <Box key={i}>
                 <Text size="sm">{pub.title || '(untitled)'}</Text>
                 <Group gap="xs">
-                  {pub.datePublished && (
-                    <Text size="xs" c="dimmed">{pub.datePublished}</Text>
-                  )}
+                  {pub.datePublished && <Text size="xs" c="dimmed">{pub.datePublished}</Text>}
                   {pub.doi && (
-                    <Anchor
+                    <Text
+                      component="a"
                       href={`https://doi.org/${pub.doi}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       size="xs"
+                      c="#005b8e"
                       style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}
                     >
                       {pub.doi}
-                      <IconExternalLink size={10} style={{ flexShrink: 0 }} />
-                    </Anchor>
+                      <IconExternalLink size={10} />
+                    </Text>
                   )}
                 </Group>
               </Box>
             ))}
           </Stack>
           <Divider my="sm" variant="dashed" />
-          <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={6}>
+          <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={4}>
             Add publications
+          </Text>
+          <Text size="sm" c="dimmed" mb={6}>
+            Enter the DOI for each publication. The implementing team will link the full record.
+            A DOI looks like: <em>10.1000/xyz123</em>
           </Text>
         </Box>
       )}
-
+      {!hasCurrentItems && (
+        <Text size="sm" c="dimmed" mb={4}>
+          Enter the DOI for each publication. The implementing team will link the full record.
+          A DOI looks like: <em>10.1000/xyz123</em>
+        </Text>
+      )}
       <Stack gap="xs">
         {items.map((item, index) => (
           <Group key={index} gap="xs" align="flex-end">
             <Box style={{ flex: 1 }}>
-              <MantineTextInput
-                label={index === 0 && !hasCurrentItems ? 'DOI' : undefined}
+              <TextInput
+                label={index === 0 ? 'DOI' : undefined}
                 placeholder="e.g. 10.1000/xyz123"
                 value={item.doi || ''}
                 onChange={(e) => update(index, { doi: e.target.value })}
-                size="sm"
               />
             </Box>
             <ActionIcon
@@ -142,7 +140,6 @@ function EditPublications({ currentItems = [], value, onChange }) {
           </Group>
         ))}
       </Stack>
-
       <Button
         variant="subtle"
         size="xs"
@@ -167,6 +164,9 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
     lastName: false,
     preferredName: false,
   });
+  const [headshotConfirmed, setHeadshotConfirmed] = useState(false);
+
+  const headshotFileName = selectedPerson?.name || '[Person Name]';
 
   switch (fieldKey) {
     case 'name':
@@ -178,7 +178,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
           {[
             { key: 'firstName',     label: 'First Name' },
             { key: 'lastName',      label: 'Last Name' },
-            { key: 'preferredName', label: 'Preferred Display Name' },
+            { key: 'preferredName', label: 'Preferred Name' },
           ].map(({ key, label }) => (
             <Box key={key}>
               <Checkbox
@@ -198,7 +198,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
                     render={({ field, fieldState }) => (
                       <TextInput
                         {...field}
-                        label={`Updated ${label}`}
+                        label={`New ${label}`}
                         required
                         error={fieldState.error?.message}
                       />
@@ -226,7 +226,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
                 {...field}
                 label="New Job Title"
                 required
-                helperText="Semicolon-separated if multiple titles."
+                helperText="Use a semicolon to separate multiple titles."
                 error={fieldState.error?.message}
               />
             )}
@@ -308,8 +308,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
           render={({ field }) => {
             const addValue    = field.value?.add    ?? [];
             const removeValue = field.value?.remove ?? [];
-            const notify      = (patch) =>
-              field.onChange({ add: addValue, remove: removeValue, ...patch });
+            const notify      = (patch) => field.onChange({ add: addValue, remove: removeValue, ...patch });
             const addedSlugs  = new Set(addValue);
             const addOptions  = [
               {
@@ -362,8 +361,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
           render={({ field }) => {
             const addValue    = field.value?.add    ?? [];
             const removeValue = field.value?.remove ?? [];
-            const notify      = (patch) =>
-              field.onChange({ add: addValue, remove: removeValue, ...patch });
+            const notify      = (patch) => field.onChange({ add: addValue, remove: removeValue, ...patch });
             return (
               <RelationalFieldEditor
                 currentLabel="Current projects"
@@ -423,11 +421,22 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
     case 'headshot':
       return (
         <Paper radius="md" p="md" style={{ background: '#f0f7fc', border: '1px solid #bbd6ea' }}>
-          <Text size="sm">
-            Please upload a new headshot to the shared org folder labeled{' '}
-            <strong>{selectedPerson?.name || '[Person Name]'}</strong>. The implementing team
-            will retrieve it from there.
-          </Text>
+          <Stack gap="sm">
+            <Text size="sm">
+              Upload the new headshot to the{' '}
+              <strong>shared org folder</strong>, labeled{' '}
+              <strong>{headshotFileName}</strong>.
+              The implementing team will retrieve it from there.
+            </Text>
+            <Checkbox
+              label="I have uploaded the headshot to the shared org folder."
+              checked={headshotConfirmed}
+              onChange={(e) => {
+                const checked = e.currentTarget.checked;
+                setHeadshotConfirmed(checked);
+              }}
+            />
+          </Stack>
         </Paper>
       );
 
@@ -458,11 +467,11 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
 // Main form
 // ---------------------------------------------------------------------------
 export default function UpdatePersonForm() {
+  const navigate = useNavigate();
   const { people, loading: peopleLoading, error: peopleError } = usePeople();
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [fieldSelections, setFieldSelections] = useState({});
 
   const {
@@ -537,7 +546,8 @@ export default function UpdatePersonForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           submitterEmail: data.submitterEmail,
-          slug: data.slug,
+          slug:           data.slug,
+          name:           selectedPerson?.name || null,  // ← added
           changes,
         }),
       });
@@ -545,9 +555,7 @@ export default function UpdatePersonForm() {
       if (res.status === 503) {
         const body = await res.json().catch(() => ({}));
         if (body.code === 'VPN_REQUIRED') {
-          setSubmitError(
-            'Could not connect to the data API. Make sure you are connected to the VPN and try again.'
-          );
+          setSubmitError('Could not connect to the data API. Make sure you are connected to the VPN and try again.');
           return;
         }
       }
@@ -560,43 +568,37 @@ export default function UpdatePersonForm() {
         return;
       }
 
-      setSubmitSuccess(true);
-      setSelectedPerson(null);
-      setFieldSelections({});
-      reset({ submitterEmail: '', slug: '', changes: [] });
+      navigate('/');
     } catch {
       setSubmitError('An unexpected error occurred. Please try again.');
     }
   };
 
-  // TODO: Modal is getting long — consider a tabbed or sectioned layout post-launch.
+  // TODO: Modal is getting long — consider tabbed layout post-launch.
   const modalFields = selectedPerson
     ? [
         { label: 'Name',              value: selectedPerson.name },
         { label: 'Slug',              value: selectedPerson.slug },
         { label: 'Active',            value: selectedPerson.active === true ? 'Yes' : selectedPerson.active === false ? 'No' : null },
         { label: 'Job Title',         value: selectedPerson.jobTitle },
-        { label: 'Groups',            value: (selectedPerson.groups || []).sort((a, b) => a.name.localeCompare(b.name)).map((g) => g.name).join(', ') || null },
+        { label: 'Groups',            value: selectedPerson.groups,    isList: true },
         { label: 'RENCI Scholar',     value: selectedPerson.renciScholar ? 'Yes' : 'No' },
         { label: 'RENCI Scholar Bio', value: selectedPerson.renciScholarBio, isHtml: true },
-        { label: 'Projects',          value: (selectedPerson.projects || []).sort((a, b) => a.name.localeCompare(b.name)).map((p) => p.name).join(', ') || null },
-        { label: 'Bio',               value: selectedPerson.bio, isHtml: true },
-        { label: 'Websites',          value: selectedPerson.websites, isWebsites: true },
+        { label: 'Projects',          value: selectedPerson.projects,  isList: true },
+        { label: 'Bio',               value: selectedPerson.bio,       isHtml: true },
+        { label: 'Websites',          value: selectedPerson.websites,  isWebsites: true },
         { label: 'Publications',      value: selectedPerson.publications, isPublications: true },
       ]
     : [];
 
-  if (submitSuccess) {
-    return <FormSuccessState onReset={() => setSubmitSuccess(false)} />;
-  }
-
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Stack gap="xl">
+
+        <FormIntro variant="update-person" />
+
         <Box>
           <Title order={4} mb="sm">Identify the Person</Title>
-          <FormIntro variant="update-person" />
-          
           <Stack gap="sm">
             {peopleError ? (
               <Alert color="red">
@@ -630,7 +632,7 @@ export default function UpdatePersonForm() {
                 {selectedPerson && (
                   <SlugConfirmation
                     slug={selectedPerson.slug}
-                    href={`https://renci.org/team/${selectedPerson.slug}`}
+                    href={`https://renci.org/staff/${selectedPerson.slug}`}
                     linkText="View Profile"
                   />
                 )}

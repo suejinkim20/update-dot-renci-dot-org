@@ -39,10 +39,12 @@ export default function RequestSelector() {
         <Transition mounted={!(action && entity)} transition="fade" duration={200} timingFunction="ease">
           {(styles) => (
             <Box style={styles}>
-              <Text size="sm" c="dimmed">
+              <Text size="md" c="#000000">
                 This tool is for RENCI staff to submit website change requests. Use it to add,
                 update, or archive projects and people on the RENCI website. Requests are reviewed
                 by the web team before any changes go live.
+                {/* Note about the content that's pulled in, how it's not updated in real-time, but more like a snapshot due to the intermediary api, expect users don't need to know every detail */}
+                {/* Also, this form is for changes that are basically ready to go live. include: Link to comms request form if users need help with wording on descriptions               */}
               </Text>
             </Box>
           )}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import {
   Stack,
   Group,
@@ -14,10 +15,10 @@ import {
   Divider,
   Paper,
   Collapse,
-  Anchor
+  Checkbox,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
-import { IconAlertCircle, IconExternalLink } from '@tabler/icons-react';
+import { IconAlertCircle } from '@tabler/icons-react';
 
 import TextInput from '../form-elements/TextInput';
 import RichTextInput from '../form-elements/RichTextInput';
@@ -31,12 +32,13 @@ import { useProjects } from '../../hooks/useProjects';
 import { useGroups } from '../../hooks/useGroups';
 
 export default function AddPersonForm() {
+  const navigate = useNavigate();
   const { researchGroups, operationsGroups, loading: groupsLoading } = useGroups();
   const { projects, loading: projectsLoading } = useProjects();
 
-  const [submitStatus, setSubmitStatus] = useState(null);
   const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const {
     control,
@@ -58,10 +60,18 @@ export default function AddPersonForm() {
       projects: [],
       bio: '',
       websites: [],
+      headshotConfirmed: false,
     },
   });
 
   const renciScholar = watch('renciScholar');
+  const firstName = watch('firstName');
+  const lastName = watch('lastName');
+  const preferredName = watch('preferredName');
+
+  const displayName = preferredName?.trim()
+    ? `${preferredName.trim()} ${lastName?.trim() || ''}`.trim()
+    : `${firstName?.trim() || ''} ${lastName?.trim() || ''}`.trim();
 
   const groupOptions = [
     {
@@ -76,13 +86,11 @@ export default function AddPersonForm() {
 
   const onSubmit = async (data) => {
     setSubmitting(true);
-    setSubmitStatus(null);
     setSubmitError('');
 
     const payload = {
       ...data,
       startDate: data.startDate ? data.startDate.toISOString().slice(0, 10) : null,
-      // Normalize websites: strip empty entries before submitting.
       websites: (data.websites || []).filter((w) => w.url?.trim()),
     };
 
@@ -95,7 +103,6 @@ export default function AddPersonForm() {
 
       if (res.status === 503) {
         setSubmitError("Unable to reach the data server. Please make sure you're connected to the VPN and try again.");
-        setSubmitStatus('error');
         return;
       }
 
@@ -104,36 +111,28 @@ export default function AddPersonForm() {
         setSubmitError(
           body?.errors?.map((e) => e.message).join(', ') || `Submission failed (${res.status})`
         );
-        setSubmitStatus('error');
         return;
       }
 
-      setSubmitStatus('success');
-      reset();
+      navigate('/');
     } catch {
       setSubmitError("Unable to reach the data server. Please make sure you're connected to the VPN and try again.");
-      setSubmitStatus('error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (submitStatus === 'success') {
-    return <FormSuccessState onReset={() => setSubmitStatus(null)} />;
-  }
+  if (submitSuccess) return <FormSuccessState />;
 
   return (
     <Stack gap="xl">
       <div>
         <Title order={3}>Add Person</Title>
-        <Text c="dimmed" size="sm" mt={4}>
-          Submit a request to add a new staff member to the RENCI website.
-        </Text>
       </div>
 
       <FormIntro variant="add-person" />
 
-      {submitStatus === 'error' && (
+      {submitError && (
         <Alert
           icon={<IconAlertCircle size={18} />}
           title="Submission failed"
@@ -202,7 +201,7 @@ export default function AddPersonForm() {
                 {...field}
                 label="Job Title"
                 required
-                helperText="Semicolon-separated if multiple titles."
+                helperText="Use a semicolon to separate multiple titles."
                 error={errors.jobTitle?.message}
               />
             )}
@@ -244,10 +243,11 @@ export default function AddPersonForm() {
                 required
                 clearable
                 placeholder="Pick a date"
-                helperText="The implementing team will not publish the profile before this date."
+                description="The implementing team will not publish the profile before this date."
                 error={errors.startDate?.message}
                 styles={{
-                  label: { fontWeight: 600, fontSize: '0.875rem', marginBottom: 4 },
+                  label:       { fontWeight: 600, fontSize: '0.875rem', marginBottom: 4 },
+                  description: { fontSize: '0.8rem', color: '#555' },
                 }}
               />
             )}
@@ -320,9 +320,6 @@ export default function AddPersonForm() {
 
           <Divider label="Websites" labelPosition="left" />
 
-          {/* EditableWebsiteList manages its own internal rows.
-              In Add forms there are no currentItems — it renders
-              only the editable entry rows. */}
           <Controller
             name="websites"
             control={control}
@@ -334,23 +331,28 @@ export default function AddPersonForm() {
             )}
           />
 
+          <Divider label="Headshot" labelPosition="left" />
+
           <Paper radius="md" p="md" style={{ background: '#f0f7fc', border: '1px solid #bbd6ea' }}>
-            <Text size="sm" fw={600} mb={4}>Headshot</Text>
-            <Text size="xs" c="dimmed">
-              Please upload a headshot photo to the shared org folder{' '}
-                <Anchor
-                  href="https://drive.google.com/drive/folders/1O2mYei1Wh_sGRC9Ro7Gz_9kVY5mUn6W1?usp=sharing"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  size="xs"
-                >
-                  shared org folder{' '}
-                  <IconExternalLink size={10}/>
-                </Anchor>,
-              labeled with this person's
-              full name (e.g. "staff_smith_jane.jpg"). The implementing team will retrieve it from there.
-              A follow-up item will be added to the ticket automatically.
-            </Text>
+            <Stack gap="sm">
+              <Text size="sm">
+                Upload a headshot photo to the{' '}
+                <strong>shared org folder</strong>, labeled with this person's full name —
+                for example: <strong>{displayName || 'First Last'}</strong>.
+                The implementing team will retrieve it from there.
+              </Text>
+              <Controller
+                name="headshotConfirmed"
+                control={control}
+                render={({ field }) => (
+                  <Checkbox
+                    label="I have uploaded the headshot to the shared org folder."
+                    checked={!!field.value}
+                    onChange={(e) => field.onChange(e.currentTarget.checked)}
+                  />
+                )}
+              />
+            </Stack>
           </Paper>
 
           <Divider />

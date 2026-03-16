@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -32,7 +33,6 @@ import CurrentDataModal from '../form-blocks/CurrentDataModal';
 import EditableWebsiteList from '../form-blocks/EditableWebsiteList';
 import RelationalFieldEditor from '../form-blocks/RelationalFieldEditor';
 import FormIntro from '../form-blocks/FormIntro';
-
 import { useProjects } from '../../hooks/useProjects';
 import { useGroups } from '../../hooks/useGroups';
 import { usePeople } from '../../hooks/usePeople';
@@ -51,12 +51,12 @@ const FIELD_OPTIONS = [
 ];
 
 const GROUP_ACRONYMS = {
-  'data-management': 'iRODS',
-  'earth-data-science': 'EDS',
+  'data-management':                     'iRODS',
+  'earth-data-science':                  'EDS',
   'network-research-and-infrastructure': 'NRIG',
-  'advanced-cyberinfrastructure-support': 'ACIS',
-  'office-of-the-director': 'OOD',
-  'research-project-management': 'RPM',
+  'advanced-cyberinfrastructure-support':'ACIS',
+  'office-of-the-director':             'OOD',
+  'research-project-management':         'RPM',
 };
 
 function buildGroupOptions(groups, excludeSlug = null) {
@@ -101,7 +101,6 @@ function EditContributors({ currentItems = [], allItems = [], value, onChange })
   const notify      = (patch) => onChange({ add: addValue, remove: removeValue, ...patch });
   const existingSlugs = new Set(currentItems.map((i) => i.slug));
   const available   = allItems.filter((i) => !existingSlugs.has(i.slug));
-
   return (
     <RelationalFieldEditor
       currentLabel="Current contributors"
@@ -127,14 +126,13 @@ function EditOrganizations({ currentItems = [], value, onChange, noun = 'organiz
   const addValue    = value?.add    ?? [{}];
   const removeValue = value?.remove ?? [];
   const notify      = (patch) => onChange({ add: addValue, remove: removeValue, ...patch });
-  const updateOrgAt = (idx, updated) => notify({ add: addValue.map((o, i) => (i === idx ? updated : o)) });
+  const updateOrgAt = (idx, updated) => notify({ add: addValue.map((o, i) => i === idx ? updated : o) });
   const addAnother  = () => notify({ add: [...addValue, {}] });
   const removeOrgAt = (idx) => {
     const next = addValue.filter((_, i) => i !== idx);
     notify({ add: next.length > 0 ? next : [{}] });
   };
   const filledCount = addValue.filter((o) => o.officialName?.trim()).length;
-
   return (
     <RelationalFieldEditor
       currentLabel={`Current ${noun}s`}
@@ -167,72 +165,73 @@ function EditOrganizations({ currentItems = [], value, onChange, noun = 'organiz
 
 function ChangeBlockInput({ fieldKey, control, index, selectedProject, people, organizations, groups }) {
   const groupOptions = buildGroupOptions(groups, selectedProject?.owningGroup?.slug);
+
   switch (fieldKey) {
     case 'name':
       return (
         <Stack gap="xs">
           {selectedProject?.name && <ReadOnlyField label="Current Name" value={selectedProject.name} />}
-          <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New name is required' }} render={({ field, fieldState }) => (
-            <RenciTextInput {...field} label="New Name" required error={fieldState.error?.message} />
-          )} />
+          <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New name is required' }}
+            render={({ field, fieldState }) => <RenciTextInput {...field} label="New Name" required error={fieldState.error?.message} />}
+          />
         </Stack>
       );
     case 'owningGroup':
       return (
         <Stack gap="xs">
           {selectedProject?.owningGroup && <ReadOnlyField label="Current Owning Group" value={selectedProject.owningGroup.label ?? selectedProject.owningGroup.name} />}
-          <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New owning group is required' }} render={({ field, fieldState }) => (
-            <Select {...field} label="New Owning Group" placeholder="Select a group" data={groupOptions} required error={fieldState.error?.message} />
-          )} />
+          <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New owning group is required' }}
+            render={({ field, fieldState }) => <Select {...field} label="New Owning Group" placeholder="Select a group" data={groupOptions} required error={fieldState.error?.message} />}
+          />
         </Stack>
       );
     case 'description':
       return (
         <Stack gap="xs">
           {selectedProject?.description && <ReadOnlyField label="Current Description" value={selectedProject.description} isHtml />}
-          <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New description is required' }} render={({ field, fieldState }) => (
-            <RichTextInput {...field} label="New Description" required error={fieldState.error?.message} />
-          )} />
+          <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New description is required' }}
+            render={({ field, fieldState }) => <RichTextInput {...field} label="New Description" required error={fieldState.error?.message} />}
+          />
         </Stack>
       );
     case 'renciRole':
       return (
         <Stack gap="xs">
           {selectedProject?.renciRole && <ReadOnlyField label="Current RENCI Role" value={selectedProject.renciRole} isHtml />}
-          <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New RENCI Role is required' }} render={({ field, fieldState }) => (
-            <RichTextInput {...field} label="New RENCI Role" required error={fieldState.error?.message} />
-          )} />
+          <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'New RENCI Role is required' }}
+            render={({ field, fieldState }) => <RichTextInput {...field} label="New RENCI Role" required error={fieldState.error?.message} />}
+          />
         </Stack>
       );
     case 'people':
       return (
-        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ add: [], remove: [] }} render={({ field }) => (
-          <EditContributors currentItems={selectedProject?.people || []} allItems={(people || []).map((p) => ({ name: p.name, slug: p.slug, id: p.id }))} value={field.value} onChange={field.onChange} />
-        )} />
+        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ add: [], remove: [] }}
+          render={({ field }) => <EditContributors currentItems={selectedProject?.people || []} allItems={(people || []).map((p) => ({ name: p.name, slug: p.slug, id: p.id }))} value={field.value} onChange={field.onChange} />}
+        />
       );
     case 'fundingOrgs':
       return (
-        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ add: [{}], remove: [] }} render={({ field }) => (
-          <EditOrganizations currentItems={selectedProject?.fundingOrgs || []} value={field.value} onChange={field.onChange} noun="funding organization" />
-        )} />
+        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ add: [{}], remove: [] }}
+          render={({ field }) => <EditOrganizations currentItems={selectedProject?.fundingOrgs || []} value={field.value} onChange={field.onChange} noun="funding organization" />}
+        />
       );
     case 'partnerOrgs':
       return (
-        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ add: [{}], remove: [] }} render={({ field }) => (
-          <EditOrganizations currentItems={selectedProject?.partnerOrgs || []} value={field.value} onChange={field.onChange} noun="partner organization" />
-        )} />
+        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ add: [{}], remove: [] }}
+          render={({ field }) => <EditOrganizations currentItems={selectedProject?.partnerOrgs || []} value={field.value} onChange={field.onChange} noun="partner organization" />}
+        />
       );
     case 'websites':
       return (
-        <Controller name={`changes.${index}.value`} control={control} defaultValue={null} render={({ field }) => (
-          <EditableWebsiteList currentItems={selectedProject?.websites || []} value={field.value?.items || null} onChange={(val) => field.onChange(val)} />
-        )} />
+        <Controller name={`changes.${index}.value`} control={control} defaultValue={[]}
+          render={({ field }) => <EditableWebsiteList currentItems={selectedProject?.websites || []} value={field.value} onChange={field.onChange} />}
+        />
       );
     case 'other':
       return (
-        <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'Please describe the change' }} render={({ field, fieldState }) => (
-          <LongTextInput {...field} label="Describe the change" helperText="Use this for edge cases, including slug changes." required error={fieldState.error?.message} />
-        )} />
+        <Controller name={`changes.${index}.value`} control={control} rules={{ required: 'Please describe the change' }}
+          render={({ field, fieldState }) => <LongTextInput {...field} label="Describe the change" helperText="Use this for edge cases, including slug changes." required error={fieldState.error?.message} />}
+        />
       );
     default:
       return null;
@@ -240,6 +239,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedProject, people, o
 }
 
 export default function UpdateProjectForm() {
+  const navigate = useNavigate();
   const { projects, loading: projectsLoading, error: projectsError } = useProjects();
   const { groups } = useGroups();
   const { people } = usePeople();
@@ -248,7 +248,6 @@ export default function UpdateProjectForm() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [fieldSelections, setFieldSelections] = useState({});
 
   const { control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm({
@@ -267,7 +266,12 @@ export default function UpdateProjectForm() {
   const handleFieldSelect = (index, val) => {
     setFieldSelections((prev) => ({ ...prev, [index]: val }));
     setValue(`changes.${index}.field`, val);
-    const relationalDefaults = { people: { add: [], remove: [] }, fundingOrgs: { add: [{}], remove: [] }, partnerOrgs: { add: [{}], remove: [] } };
+    const relationalDefaults = {
+      people:      { add: [], remove: [] },
+      fundingOrgs: { add: [{}], remove: [] },
+      partnerOrgs: { add: [{}], remove: [] },
+      websites:    [],
+    };
     setValue(`changes.${index}.value`, relationalDefaults[val] ?? null);
   };
 
@@ -289,7 +293,10 @@ export default function UpdateProjectForm() {
   const onSubmit = async (data) => {
     setSubmitError(null);
     const validChanges = data.changes.filter((_, i) => fieldSelections[i]);
-    if (validChanges.length === 0) { setSubmitError('Please add at least one change block.'); return; }
+    if (validChanges.length === 0) {
+      setSubmitError('Please add at least one change block.');
+      return;
+    }
 
     const changes = data.changes
       .map((change, i) => {
@@ -304,54 +311,60 @@ export default function UpdateProjectForm() {
       const res = await fetch('/api/projects/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ submitterEmail: data.submitterEmail, slug: data.slug, changes }),
+        body: JSON.stringify({
+          submitterEmail: data.submitterEmail,
+          slug:           data.slug,
+          name:           selectedProject?.name || null,  // ← added
+          changes,
+        }),
       });
 
       if (res.status === 503) {
         const body = await res.json().catch(() => ({}));
-        if (body.code === 'VPN_REQUIRED') { setSubmitError('Could not connect to the data API. Make sure you are connected to the VPN and try again.'); return; }
+        if (body.code === 'VPN_REQUIRED') {
+          setSubmitError('Could not connect to the data API. Make sure you are connected to the VPN and try again.');
+          return;
+        }
       }
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setSubmitError(body.errors?.map((e) => e.message).join(', ') || 'Submission failed. Please try again.');
+        setSubmitError(
+          body.errors?.map((e) => e.message).join(', ') || 'Submission failed. Please try again.'
+        );
         return;
       }
 
-      setSubmitSuccess(true);
-      setSelectedProject(null);
-      setFieldSelections({});
-      reset({ submitterEmail: '', slug: '', changes: [] });
+      navigate('/');
     } catch {
       setSubmitError('An unexpected error occurred. Please try again.');
     }
   };
 
-  const modalFields = selectedProject ? [
-    { label: 'Name',                   value: selectedProject.name },
-    { label: 'Slug',                   value: selectedProject.slug },
-    { label: 'Active',                 value: selectedProject.active === 1 ? 'Yes' : selectedProject.active === 0 ? 'No' : null },
-    { label: 'Description',            value: selectedProject.description,           isHtml: true },
-    { label: 'Additional Description', value: selectedProject.additionalDescription, isHtml: true },
-    { label: "RENCI's Role",           value: selectedProject.renciRole,             isHtml: true },
-    { label: 'Owning Group',           value: selectedProject.owningGroup?.label ?? selectedProject.owningGroup?.name },
-    { label: 'Contributors',           value: selectedProject.people?.length ? [...selectedProject.people].sort((a, b) => a.name.localeCompare(b.name)).map((p) => p.name).join(', ') : null },
-    { label: 'Funding Organizations',  value: selectedProject.fundingOrgs?.length ? selectedProject.fundingOrgs.map((o) => o.name).join(', ') : null },
-    { label: 'Partner Organizations',  value: selectedProject.partnerOrgs?.length ? selectedProject.partnerOrgs.map((o) => o.name).join(', ') : null },
-    { label: 'Websites',               value: selectedProject.websites, isWebsites: true },
-  ] : [];
-
-  if (submitSuccess) {
-    return <FormSuccessState onReset={() => setSubmitSuccess(false)} />;
-  }
+  const modalFields = selectedProject
+    ? [
+        { label: 'Name',                   value: selectedProject.name },
+        { label: 'Slug',                   value: selectedProject.slug },
+        { label: 'Active',                 value: selectedProject.active === true ? 'Yes' : selectedProject.active === false ? 'No' : null },
+        { label: 'Description',            value: selectedProject.description,           isHtml: true },
+        { label: 'Additional Description', value: selectedProject.additionalDescription, isHtml: true },
+        { label: "RENCI's Role",           value: selectedProject.renciRole,             isHtml: true },
+        { label: 'Owning Group',           value: selectedProject.owningGroup?.label ?? selectedProject.owningGroup?.name },
+        { label: 'Contributors',           value: selectedProject.people,                isList: true },
+        { label: 'Funding Organizations',  value: selectedProject.fundingOrgs,           isList: true },
+        { label: 'Partner Organizations',  value: selectedProject.partnerOrgs,           isList: true },
+        { label: 'Websites',               value: selectedProject.websites,              isWebsites: true },
+      ]
+    : [];
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <Stack gap="xl">
+
+        <FormIntro variant="update-project" />
+
         <Box>
           <Title order={4} mb="sm">Identify the Project</Title>
-          <FormIntro variant="update-project" />
-          
           <Stack gap="sm">
             {projectsError ? (
               <Alert color="red">Could not load projects. Make sure you are connected to the VPN.</Alert>
@@ -370,7 +383,7 @@ export default function UpdateProjectForm() {
                 {selectedProject && (
                   <SlugConfirmation
                     slug={selectedProject.slug}
-                    href={`https://renci.org/projects/${selectedProject.slug}`}
+                    href={`https://renci.org/project/${selectedProject.slug}`}
                     linkText="View Project Page"
                   />
                 )}
@@ -384,23 +397,45 @@ export default function UpdateProjectForm() {
             <Divider />
             <Box>
               <Title order={4} mb="xs">Declare Changes</Title>
-              <Text size="sm" c="dimmed" mb="md">Add one block per change. Each block becomes a separate action item on the ticket.</Text>
+              <Text size="sm" c="dimmed" mb="md">
+                Add one block per change. Each block becomes a separate action item on the ticket.
+              </Text>
               <Stack gap="md">
                 {changeFields.map((item, index) => (
                   <Paper key={item.id} withBorder p="md" radius="sm">
                     <Stack gap="sm">
                       <Group justify="space-between" align="center">
                         <Text size="sm" fw={500}>Change {index + 1}</Text>
-                        <ActionIcon color="red" variant="subtle" size="sm" onClick={() => removeChangeBlock(index)}><IconTrash size={14} /></ActionIcon>
+                        <ActionIcon color="red" variant="subtle" size="sm" onClick={() => removeChangeBlock(index)}>
+                          <IconTrash size={14} />
+                        </ActionIcon>
                       </Group>
-                      <Select label="What are you changing?" placeholder="Select a field" data={FIELD_OPTIONS} value={fieldSelections[index] || null} onChange={(val) => handleFieldSelect(index, val)} required />
+                      <Select
+                        label="What are you changing?"
+                        placeholder="Select a field"
+                        data={FIELD_OPTIONS}
+                        value={fieldSelections[index] || null}
+                        onChange={(val) => handleFieldSelect(index, val)}
+                        required
+                      />
                       {fieldSelections[index] && (
-                        <ChangeBlockInput key={fieldSelections[index]} fieldKey={fieldSelections[index]} control={control} index={index} selectedProject={selectedProject} people={people} organizations={organizations} groups={groups} />
+                        <ChangeBlockInput
+                          key={fieldSelections[index]}
+                          fieldKey={fieldSelections[index]}
+                          control={control}
+                          index={index}
+                          selectedProject={selectedProject}
+                          people={people}
+                          organizations={organizations}
+                          groups={groups}
+                        />
                       )}
                     </Stack>
                   </Paper>
                 ))}
-                <Button variant="light" leftSection={<IconPlus size={16} />} onClick={addChangeBlock} style={{ alignSelf: 'flex-start' }}>Add change</Button>
+                <Button variant="light" leftSection={<IconPlus size={16} />} onClick={addChangeBlock} style={{ alignSelf: 'flex-start' }}>
+                  Add change
+                </Button>
                 {submitError && <Alert color="red" mt="xs">{submitError}</Alert>}
               </Stack>
             </Box>
@@ -408,7 +443,9 @@ export default function UpdateProjectForm() {
             <Divider />
 
             <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
-            <Button type="submit" loading={isSubmitting} fullWidth>Submit Update Request</Button>
+            <Button type="submit" loading={isSubmitting} fullWidth>
+              Submit Update Request
+            </Button>
           </>
         )}
       </Stack>
