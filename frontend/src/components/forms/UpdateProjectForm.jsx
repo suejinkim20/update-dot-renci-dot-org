@@ -330,7 +330,7 @@ export default function UpdateProjectForm() {
   const modalFields = selectedProject ? [
     { label: 'Name',                   value: selectedProject.name },
     { label: 'Slug',                   value: selectedProject.slug },
-    { label: 'Active',                 value: selectedProject.active === true ? 'Yes' : selectedProject.active === false ? 'No' : null },
+    { label: 'Active',                 value: selectedProject.active === 1 ? 'Yes' : selectedProject.active === 0 ? 'No' : null },
     { label: 'Description',            value: selectedProject.description,           isHtml: true },
     { label: 'Additional Description', value: selectedProject.additionalDescription, isHtml: true },
     { label: "RENCI's Role",           value: selectedProject.renciRole,             isHtml: true },

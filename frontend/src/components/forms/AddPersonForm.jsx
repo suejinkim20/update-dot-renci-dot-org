@@ -14,9 +14,10 @@ import {
   Divider,
   Paper,
   Collapse,
+  Anchor
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconExternalLink } from '@tabler/icons-react';
 
 import TextInput from '../form-elements/TextInput';
 import RichTextInput from '../form-elements/RichTextInput';
@@ -336,8 +337,18 @@ export default function AddPersonForm() {
           <Paper radius="md" p="md" style={{ background: '#f0f7fc', border: '1px solid #bbd6ea' }}>
             <Text size="sm" fw={600} mb={4}>Headshot</Text>
             <Text size="xs" c="dimmed">
-              Please upload a headshot photo to the shared org folder, labeled with this person's
-              full name (e.g. "Jane Smith"). The implementing team will retrieve it from there.
+              Please upload a headshot photo to the shared org folder{' '}
+                <Anchor
+                  href="https://drive.google.com/drive/folders/1O2mYei1Wh_sGRC9Ro7Gz_9kVY5mUn6W1?usp=sharing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="xs"
+                >
+                  shared org folder{' '}
+                  <IconExternalLink size={10}/>
+                </Anchor>,
+              labeled with this person's
+              full name (e.g. "staff_smith_jane.jpg"). The implementing team will retrieve it from there.
               A follow-up item will be added to the ticket automatically.
             </Text>
           </Paper>
