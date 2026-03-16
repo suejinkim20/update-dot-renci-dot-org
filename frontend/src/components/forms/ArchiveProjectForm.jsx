@@ -15,7 +15,6 @@ export default function ArchiveProjectForm() {
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
   const { projects = [], error: projectsError } = useProjects();
 
   const {
@@ -42,9 +41,9 @@ export default function ArchiveProjectForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           submitterEmail: data.submitterEmail,
-          slug: data.project?.slug,
-          name: data.project?.name,
-          reason: data.reason,
+          slug:           data.project?.slug,
+          name:           data.project?.name,
+          reason:         data.reason,
         }),
       });
 
@@ -65,8 +64,6 @@ export default function ArchiveProjectForm() {
       setSubmitError('Could not reach the server. Check your connection and try again.');
     }
   }
-
-  if (submitted) return <FormSuccessState />;
 
   if (confirming) {
     return (
@@ -109,6 +106,7 @@ export default function ArchiveProjectForm() {
               slug={selectedProject.slug}
               href={`https://renci.org/project/${selectedProject.slug}`}
               linkText="View Project Page"
+              noHelper
             />
           )}
         </Stack>
@@ -139,9 +137,7 @@ export default function ArchiveProjectForm() {
         <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
 
         <Box style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button type="submit" color="orange">
-            Review &amp; confirm
-          </Button>
+          <Button type="submit" color="orange">Review &amp; confirm</Button>
         </Box>
 
       </Stack>

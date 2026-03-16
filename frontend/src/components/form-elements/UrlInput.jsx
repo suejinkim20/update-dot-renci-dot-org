@@ -1,25 +1,8 @@
+// frontend/src/components/fields/UrlInput.jsx
+
 import { TextInput, Text } from '@mantine/core';
 import { IconLink } from '@tabler/icons-react';
 
-/**
- * UrlInput
- * Wraps Mantine TextInput with URL-specific validation hint and an optional icon.
- * For use with React Hook Form's Controller.
- *
- * Usage:
- *   <Controller
- *     name="websiteUrl"
- *     control={control}
- *     render={({ field }) => (
- *       <UrlInput
- *         {...field}
- *         label="Website URL"
- *         error={errors.websiteUrl?.message}
- *         helperText="Include https://"
- *       />
- *     )}
- *   />
- */
 export default function UrlInput({
   label,
   error,
@@ -28,7 +11,6 @@ export default function UrlInput({
   placeholder = 'https://',
   disabled = false,
   showIcon = true,
-  // React Hook Form field props
   value,
   onChange,
   onBlur,
@@ -54,24 +36,14 @@ export default function UrlInput({
         inputMode="url"
         leftSection={showIcon ? <IconLink size={16} stroke={1.5} /> : undefined}
         styles={{
-          label: {
-            fontWeight: 600,
-            fontSize: '0.875rem',
-            marginBottom: 4,
-          },
-          input: {
-            fontSize: '0.9375rem',
-            borderRadius: 6,
-            fontFamily: 'monospace',
-          },
-          error: {
-            marginTop: 4,
-          },
+          label: { fontWeight: 600, fontSize: '0.875rem', marginBottom: 4 },
+          input: { fontSize: '0.9375rem', borderRadius: 6, fontFamily: 'monospace' },
+          error: { marginTop: 4 },
         }}
         {...rest}
       />
       {helperText && !error && (
-        <Text size="xs" c="dimmed" mt={2}>
+        <Text size="sm" c="dimmed" mt={2}>
           {helperText}
         </Text>
       )}

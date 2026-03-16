@@ -6,14 +6,9 @@
 // Link types map to CSS classes on the RENCI website that attach
 // service-specific logos. Untyped entries get a generic web icon.
 // Type is stored in submitted data so the implementing team knows
-// what kind of link it is — it is not sent to Monday.
+// what kind of link it is.
 //
 // Entry shape: { url, type? }
-//
-// Props:
-//   currentItems  {Array}     - Existing items from API (shown read-only in Update forms)
-//   value         {Array|null} - Controlled list of new/edited entries
-//   onChange      {Function}  - Called with updated array
 
 import { useState } from 'react';
 import {
@@ -27,26 +22,24 @@ import {
   Select,
   Divider,
   Anchor,
+  List,
 } from '@mantine/core';
 import { IconPlus, IconTrash, IconExternalLink } from '@tabler/icons-react';
 
 // ---------------------------------------------------------------------------
-// Link type options.
-// Add new types here — label is shown in the dropdown, value is stored.
+// Link type options — add new types here.
 // ---------------------------------------------------------------------------
 export const LINK_TYPES = [
-  { value: 'youtube',          label: 'YouTube' },
-  { value: 'linkedin',         label: 'LinkedIn' },
-  { value: 'github',           label: 'GitHub' },
-  { value: 'orcid',            label: 'ORCID' },
-  { value: 'google-scholar',   label: 'Google Scholar' },
+  { value: 'youtube',        label: 'YouTube' },
+  { value: 'linkedin',       label: 'LinkedIn' },
+  { value: 'github',         label: 'GitHub' },
+  { value: 'orcid',          label: 'ORCID' },
+  { value: 'google-scholar', label: 'Google Scholar' },
 ];
 
 const emptyEntry = () => ({ url: '', type: '' });
 
 export default function EditableWebsiteList({ currentItems = [], value, onChange }) {
-  // In Update forms, value is the working list of new entries to add.
-  // In Add forms, value is the full list (no currentItems).
   const items = Array.isArray(value) && value.length > 0 ? value : [emptyEntry()];
 
   const update = (index, patch) => {
@@ -65,33 +58,45 @@ export default function EditableWebsiteList({ currentItems = [], value, onChange
 
   return (
     <Stack gap="sm">
-      {/* Current items — read-only, shown in Update forms only */}
+      {/* Current items — bulleted list, read-only, shown in Update forms only */}
       {hasCurrentItems && (
         <Box>
           <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={6}>
             Current websites
           </Text>
-          <Stack gap={4}>
+          <List size="sm" spacing={4}>
             {currentItems.map(({ url, type }, i) => (
-              <Group key={i} gap="xs" align="center">
-                {type && (
-                  <Text size="xs" c="dimmed" w={100} style={{ flexShrink: 0 }}>
-                    {LINK_TYPES.find((t) => t.value === type)?.label ?? type}
-                  </Text>
-                )}
-                <Anchor
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  size="sm"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
-                >
-                  {url}
-                  <IconExternalLink size={12} style={{ flexShrink: 0 }} />
-                </Anchor>
-              </Group>
+              <List.Item key={i}>
+                <Group gap={6} wrap="nowrap" align="center">
+                  {type && (
+                    <Text size="xs" c="dimmed" style={{ flexShrink: 0 }}>
+                      {LINK_TYPES.find((t) => t.value === type)?.label ?? type}:
+                    </Text>
+                  )}
+                  {/* Wrap url in a flex container so icon stays inline with text,
+                      even on long URLs that wrap to a second line */}
+                  <Anchor
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    size="sm"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'flex-start',
+                      gap: 4,
+                      wordBreak: 'break-all',
+                    }}
+                  >
+                    <span>{url}</span>
+                    <IconExternalLink
+                      size={12}
+                      style={{ flexShrink: 0, marginTop: 3 }}
+                    />
+                  </Anchor>
+                </Group>
+              </List.Item>
             ))}
-          </Stack>
+          </List>
           <Divider my="sm" variant="dashed" />
           <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={6}>
             Add websites

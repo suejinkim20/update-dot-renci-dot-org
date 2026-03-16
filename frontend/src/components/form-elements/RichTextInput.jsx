@@ -4,12 +4,12 @@
 // Users write in markdown; the Preview tab renders it as styled HTML.
 // The submitted value is always the raw markdown string.
 //
-// The Write textarea is vertically resizable via the bottom-right handle.
+// Supported formatting: links only — [link text](https://url.com)
+// Other markdown formatting is intentionally not supported, as content
+// will be rendered on the RENCI website where styling is controlled by
+// the site's CSS, not by the submitter.
 //
-// Supported markdown:
-//   **bold**, *italic*, # headings (h1–h4),
-//   [text](url) links, - / * unordered lists, 1. ordered lists,
-//   blank-line-separated paragraphs, line breaks.
+// The Write textarea is vertically resizable via the bottom-right handle.
 //
 // Used for: description, renciRole (projects), bio, renciScholarBio (people).
 
@@ -17,55 +17,36 @@ import { useState, forwardRef } from 'react';
 import { Box, Tabs, Textarea, Text, TypographyStylesProvider } from '@mantine/core';
 
 // ---------------------------------------------------------------------------
-// Minimal markdown → HTML converter.
-// Handles the subset of markdown users will realistically need in these fields.
+// Link-only markdown → HTML converter.
+// Only converts [text](url) syntax. All other markdown is ignored and
+// rendered as plain text, preventing users from adding unsupported formatting.
 // ---------------------------------------------------------------------------
 function markdownToHtml(md) {
   if (!md) return '';
 
-  let html = md
-    // Headings
-    .replace(/^#### (.+)$/gm, '<h4>$1</h4>')
-    .replace(/^### (.+)$/gm,  '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm,   '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm,    '<h1>$1</h1>')
-    // Bold and italic (order matters — bold before italic)
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g,     '<em>$1</em>')
-    // Links
-    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
-    // Unordered lists — collect consecutive `- ` or `* ` lines
-    .replace(/((?:^[-*] .+\n?)+)/gm, (match) => {
-      const items = match
-        .trim()
-        .split('\n')
-        .map((line) => `<li>${line.replace(/^[-*] /, '')}</li>`)
-        .join('');
-      return `<ul>${items}</ul>`;
-    })
-    // Ordered lists — collect consecutive `1. ` lines
-    .replace(/((?:^\d+\. .+\n?)+)/gm, (match) => {
-      const items = match
-        .trim()
-        .split('\n')
-        .map((line) => `<li>${line.replace(/^\d+\. /, '')}</li>`)
-        .join('');
-      return `<ol>${items}</ol>`;
-    });
+  // Escape HTML entities first to prevent XSS from raw text
+  const escaped = md
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 
-  // Paragraphs: split on blank lines, wrap non-block content in <p>.
-  const blockRe = /^<(h[1-4]|ul|ol|li)/;
-  html = html
+  // Convert [text](url) links only
+  const withLinks = escaped.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
+
+  // Convert double newlines to paragraph breaks, single newlines to <br>
+  const withParagraphs = withLinks
     .split(/\n{2,}/)
     .map((block) => {
-      block = block.trim();
-      if (!block) return '';
-      if (blockRe.test(block)) return block;
-      return `<p>${block.replace(/\n/g, '<br />')}</p>`;
+      const trimmed = block.trim();
+      if (!trimmed) return '';
+      return `<p>${trimmed.replace(/\n/g, '<br />')}</p>`;
     })
     .join('\n');
 
-  return html;
+  return withParagraphs;
 }
 
 // ---------------------------------------------------------------------------
@@ -95,9 +76,7 @@ const RichTextInput = forwardRef(function RichTextInput(
         <Text component="label" size="sm" fw={600} mb={4} display="block">
           {label}
           {required && (
-            <Text component="span" c="red" ml={2} aria-hidden>
-              *
-            </Text>
+            <Text component="span" c="red" ml={2} aria-hidden>*</Text>
           )}
         </Text>
       )}
@@ -109,27 +88,43 @@ const RichTextInput = forwardRef(function RichTextInput(
         </Tabs.List>
 
         <Tabs.Panel value="write">
-          <Textarea
-            ref={ref}
-            name={name}
-            value={value || ''}
-            onChange={onChange}
-            onBlur={onBlur}
-            rows={rows}
-            error={error}
-            styles={{
-              input: {
-                borderTopLeftRadius: 0,
-                borderTopRightRadius: 0,
-                fontFamily: 'monospace',
+          <Box>
+            <Textarea
+              ref={ref}
+              name={name}
+              value={value || ''}
+              onChange={onChange}
+              onBlur={onBlur}
+              rows={rows}
+              error={error}
+              styles={{
+                input: {
+                  borderTopLeftRadius: 0,
+                  borderTopRightRadius: 0,
+                  fontFamily: 'monospace',
+                  fontSize: '0.8rem',
+                  resize: 'vertical',
+                  minHeight: `${rows * 1.6}rem`,
+                },
+              }}
+              {...rest}
+            />
+            {/* Link formatting instructions */}
+            <Box
+              style={{
+                marginTop: 6,
+                padding: '6px 10px',
+                background: 'var(--mantine-color-gray-0)',
+                border: '1px solid var(--mantine-color-gray-2)',
+                borderRadius: 'var(--mantine-radius-sm)',
                 fontSize: '0.8rem',
-                // Vertical resize only — horizontal would break layout.
-                resize: 'vertical',
-                minHeight: `${rows * 1.6}rem`,
-              },
-            }}
-            {...rest}
-          />
+                color: 'var(--mantine-color-dimmed)',
+              }}
+            >
+              To add a link: <code style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>[link text](https://url.com)</code>
+              &nbsp;— other formatting is not supported and will appear as plain text.
+            </Box>
+          </Box>
         </Tabs.Panel>
 
         <Tabs.Panel value="preview">
@@ -151,23 +146,17 @@ const RichTextInput = forwardRef(function RichTextInput(
                 <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
               </TypographyStylesProvider>
             ) : (
-              <Text size="sm" c="dimmed" fs="italic">
-                Nothing to preview.
-              </Text>
+              <Text size="sm" c="dimmed" fs="italic">Nothing to preview.</Text>
             )}
           </Box>
           {error && (
-            <Text size="xs" c="red" mt={4}>
-              {error}
-            </Text>
+            <Text size="xs" c="red" mt={4}>{error}</Text>
           )}
         </Tabs.Panel>
       </Tabs>
 
       {helperText && !error && (
-        <Text size="xs" c="dimmed" mt={4}>
-          {helperText}
-        </Text>
+        <Text size="sm" c="dimmed" mt={4}>{helperText}</Text>
       )}
     </Box>
   );

@@ -16,7 +16,6 @@ export default function ArchivePersonForm() {
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
   const { people = [], error: peopleError } = usePeople();
 
   const {
@@ -44,8 +43,8 @@ export default function ArchivePersonForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           submitterEmail: data.submitterEmail,
-          slug: data.person?.slug,
-          name: data.person?.name,
+          slug:          data.person?.slug,
+          name:          data.person?.name,
           effectiveDate: data.effectiveDate
             ? data.effectiveDate.toISOString().slice(0, 10)
             : null,
@@ -70,8 +69,6 @@ export default function ArchivePersonForm() {
       setSubmitError('Could not reach the server. Check your connection and try again.');
     }
   }
-
-  if (submitted) return <FormSuccessState />;
 
   if (confirming) {
     return (
@@ -114,6 +111,7 @@ export default function ArchivePersonForm() {
               slug={selectedPerson.slug}
               href={`https://renci.org/staff/${selectedPerson.slug}`}
               linkText="View Profile"
+              noHelper
             />
           )}
         </Stack>
@@ -132,7 +130,7 @@ export default function ArchivePersonForm() {
               description="Last day / date the archival takes effect."
               error={errors.effectiveDate?.message}
               styles={{
-                label: { fontWeight: 600, fontSize: '0.875rem', marginBottom: 4 },
+                label:       { fontWeight: 600, fontSize: '0.875rem', marginBottom: 4 },
                 description: { fontSize: '0.8rem', color: '#555' },
               }}
             />
@@ -165,9 +163,7 @@ export default function ArchivePersonForm() {
         <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
 
         <Box style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Button type="submit" color="orange">
-            Review &amp; confirm
-          </Button>
+          <Button type="submit" color="orange">Review &amp; confirm</Button>
         </Box>
 
       </Stack>

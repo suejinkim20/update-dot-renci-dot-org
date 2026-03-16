@@ -15,10 +15,6 @@ function entityFromHref(href = '') {
   return 'project';
 }
 
-/**
- * Returns an inline helper string explaining what a slug is,
- * with a URL example appropriate to the entity type.
- */
 function slugHelperText(entity) {
   if (entity === 'person') {
     return 'A slug is the URL identifier for this profile — e.g. "jane-smith" in renci.org/staff/jane-smith.';
@@ -28,22 +24,22 @@ function slugHelperText(entity) {
 
 /**
  * SlugConfirmation
- * Displays a read-only slug field with an inline explanation of what a slug
- * is and a right-aligned link to the live page.
+ * Displays a read-only slug field with an inline explanation and a link to the live page.
  * Used on all Update and Archive forms after a person or project is selected.
+ *
+ * Props:
+ *   slug      {string}  - The slug value to display
+ *   href      {string}  - URL to the live page
+ *   linkText  {string}  - Label for the external link
+ *   noHelper  {boolean} - If true, suppresses the slug explanation helper text.
+ *                         Use on Archive forms where the slug is just confirming
+ *                         identity, not something the user needs explained.
  *
  * Entity type is derived automatically from the href pattern:
  *   renci.org/staff/...   → person example
  *   renci.org/project/... → project example
- *
- * Usage:
- *   <SlugConfirmation
- *     slug={selectedProject.slug}
- *     href={`https://renci.org/project/${selectedProject.slug}`}
- *     linkText="View Project Page"
- *   />
  */
-export default function SlugConfirmation({ slug, href, linkText }) {
+export default function SlugConfirmation({ slug, href, linkText, noHelper = false }) {
   if (!slug) return null;
 
   const entity = entityFromHref(href);
@@ -51,9 +47,11 @@ export default function SlugConfirmation({ slug, href, linkText }) {
   return (
     <Stack gap={4}>
       <ReadOnlyField label="Slug" value={slug} />
-      <Text size="xs" c="dimmed">
-        {slugHelperText(entity)}
-      </Text>
+      {!noHelper && (
+        <Text size="sm" c="dimmed">
+          {slugHelperText(entity)}
+        </Text>
+      )}
       {href && (
         <Box style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Text

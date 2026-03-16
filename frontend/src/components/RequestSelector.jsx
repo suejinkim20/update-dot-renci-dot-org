@@ -1,7 +1,8 @@
 // frontend/src/components/RequestSelector.jsx
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container, Select, Text, Box, Stack, Paper, Transition } from '@mantine/core';
+import { Container, Select, Text, Box, Stack, Paper, Transition, Anchor } from '@mantine/core';
 
 const ACTION_OPTIONS = [
   { value: 'add',     label: 'Add' },
@@ -33,24 +34,34 @@ export default function RequestSelector() {
     <Container size="sm" py="xl">
       <Stack gap="xl">
 
-        {/* Intro text — fades out once both selectors have a value and navigation occurs.
-            Since navigation unmounts this component, the transition is just for
-            the brief moment between second selection and route change. */}
         <Transition mounted={!(action && entity)} transition="fade" duration={200} timingFunction="ease">
           {(styles) => (
             <Box style={styles}>
-              <Text size="md" c="#000000">
-                This tool is for RENCI staff to submit website change requests. Use it to add,
-                update, or archive projects and people on the RENCI website. Requests are reviewed
-                by the web team before any changes go live.
-                {/* Note about the content that's pulled in, how it's not updated in real-time, but more like a snapshot due to the intermediary api, expect users don't need to know every detail */}
-                {/* Also, this form is for changes that are basically ready to go live. include: Link to comms request form if users need help with wording on descriptions               */}
-              </Text>
+              <Stack gap="sm">
+                <Text size="md" c="#000000">
+                  Use this tool to submit website change requests for projects and people
+                  on the RENCI website. Requests are reviewed by the web team before any
+                  changes go live. The data shown in forms reflects a recent snapshot from
+                  the website — minor discrepancies with the live site are expected.
+                </Text>
+                <Text size="md" c="#000000">
+                  This form is for content that is <strong>ready to publish</strong>. If
+                  you need help writing or editing descriptions, bios, or other copy,
+                  please use the{' '}
+                  <Anchor
+                    href="https://renci.org/comms-request"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    communications request form
+                  </Anchor>{' '}
+                  first.
+                </Text>
+              </Stack>
             </Box>
           )}
         </Transition>
 
-        {/* Selector card */}
         <Paper
           withBorder
           radius="md"
@@ -89,9 +100,9 @@ export default function RequestSelector() {
                 styles={{
                   input: {
                     fontWeight: 600,
-                    color: action ? '#005b8e' : undefined,
+                    color:       action ? '#005b8e' : undefined,
                     borderColor: action ? '#005b8e' : undefined,
-                    background: action ? '#f0f7fc' : '#fff',
+                    background:  action ? '#f0f7fc' : '#fff',
                   },
                 }}
                 aria-label="Select action"
@@ -110,9 +121,9 @@ export default function RequestSelector() {
                 styles={{
                   input: {
                     fontWeight: 600,
-                    color: entity ? '#005b8e' : undefined,
+                    color:       entity ? '#005b8e' : undefined,
                     borderColor: entity ? '#005b8e' : undefined,
-                    background: entity ? '#f0f7fc' : '#fff',
+                    background:  entity ? '#f0f7fc' : '#fff',
                   },
                 }}
                 aria-label="Select entity type"
