@@ -2,21 +2,21 @@
 
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { Stack, Text, Button, Alert, Box, Paper } from '@mantine/core';
-import { IconAlertTriangle, IconExternalLink } from '@tabler/icons-react';
-import { AutocompleteField, ReadOnlyField, LongTextInput, TextInput } from '../form-elements';
+import { AutocompleteField, LongTextInput } from '../form-elements';
 import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import SlugConfirmation from '../form-blocks/SlugConfirmation';
 import ArchiveConfirmation from '../form-blocks/ArchiveConfirmation';
 import FormSuccessState from '../form-blocks/FormSuccessState';
-
 import { useProjects } from '../../hooks/useProjects';
 
 export default function ArchiveProjectForm() {
+  const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
-  const { projects = [], loading, error: projectsError } = useProjects();
+  const { projects = [], error: projectsError } = useProjects();
 
   const {
     control,
@@ -60,17 +60,13 @@ export default function ArchiveProjectForm() {
         return;
       }
 
-      setSubmitted(true);
-      reset();
-      setConfirming(false);
+      navigate('/');
     } catch {
       setSubmitError('Could not reach the server. Check your connection and try again.');
     }
   }
 
-  if (submitted) {
-    return <FormSuccessState onReset={() => setSubmitted(false)} />;
-  }
+  if (submitted) return <FormSuccessState />;
 
   if (confirming) {
     return (
@@ -88,10 +84,6 @@ export default function ArchiveProjectForm() {
   return (
     <form onSubmit={(e) => { e.preventDefault(); handleSubmit(() => setConfirming(true))(); }}>
       <Stack gap="lg">
-
-        <Text size="xs" c="dimmed" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
-          Archive Project
-        </Text>
 
         <Stack gap="xs">
           {projectsError ? (
@@ -112,11 +104,13 @@ export default function ArchiveProjectForm() {
               )}
             />
           )}
-          <SlugConfirmation
-            slug={selectedProject?.slug}
-            href={`https://renci.org/projects/${selectedProject?.slug}`}
-            linkText="View Project Page"
-          />
+          {selectedProject && (
+            <SlugConfirmation
+              slug={selectedProject.slug}
+              href={`https://renci.org/project/${selectedProject.slug}`}
+              linkText="View Project Page"
+            />
+          )}
         </Stack>
 
         <Controller
@@ -135,7 +129,7 @@ export default function ArchiveProjectForm() {
         />
 
         <Paper radius="md" p="md" style={{ background: '#fff8f0', border: '1px solid #f59e0b' }}>
-          <Text size="xs" c="dimmed">
+          <Text size="sm" c="dimmed">
             Archiving a project sets it to inactive. The project page remains publicly
             accessible but will no longer appear in active project listings.
             The implementing team will review this request before making any changes.

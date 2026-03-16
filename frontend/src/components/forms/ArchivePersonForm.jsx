@@ -2,21 +2,22 @@
 
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { Stack, Text, Button, Alert, Box, Paper } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
-import { AutocompleteField, ReadOnlyField, LongTextInput, TextInput } from '../form-elements';
+import { AutocompleteField, LongTextInput } from '../form-elements';
 import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import SlugConfirmation from '../form-blocks/SlugConfirmation';
 import ArchiveConfirmation from '../form-blocks/ArchiveConfirmation';
 import FormSuccessState from '../form-blocks/FormSuccessState';
-
 import { usePeople } from '../../hooks/usePeople';
 
 export default function ArchivePersonForm() {
+  const navigate = useNavigate();
   const [confirming, setConfirming] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitted, setSubmitted] = useState(false);
-  const { people = [], loading, error: peopleError } = usePeople();
+  const { people = [], error: peopleError } = usePeople();
 
   const {
     control,
@@ -30,7 +31,6 @@ export default function ArchivePersonForm() {
       person: null,
       effectiveDate: null,
       reason: '',
-      additionalContext: '',
     },
   });
 
@@ -45,11 +45,11 @@ export default function ArchivePersonForm() {
         body: JSON.stringify({
           submitterEmail: data.submitterEmail,
           slug: data.person?.slug,
+          name: data.person?.name,
           effectiveDate: data.effectiveDate
             ? data.effectiveDate.toISOString().slice(0, 10)
             : null,
           reason: data.reason,
-          additionalContext: data.additionalContext || undefined,
         }),
       });
 
@@ -65,17 +65,13 @@ export default function ArchivePersonForm() {
         return;
       }
 
-      setSubmitted(true);
-      reset();
-      setConfirming(false);
+      navigate('/');
     } catch {
       setSubmitError('Could not reach the server. Check your connection and try again.');
     }
   }
 
-  if (submitted) {
-    return <FormSuccessState onReset={() => setSubmitted(false)} />;
-  }
+  if (submitted) return <FormSuccessState />;
 
   if (confirming) {
     return (
@@ -93,10 +89,6 @@ export default function ArchivePersonForm() {
   return (
     <form onSubmit={(e) => { e.preventDefault(); handleSubmit(() => setConfirming(true))(); }}>
       <Stack gap="lg">
-
-        <Text size="xs" c="dimmed" style={{ textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 600 }}>
-          Archive Person
-        </Text>
 
         <Stack gap="xs">
           {peopleError ? (
@@ -117,11 +109,13 @@ export default function ArchivePersonForm() {
               )}
             />
           )}
-          <SlugConfirmation
-            slug={selectedPerson?.slug}
-            href={`https://renci.org/team/${selectedPerson?.slug}`}
-            linkText="View Profile"
-          />
+          {selectedPerson && (
+            <SlugConfirmation
+              slug={selectedPerson.slug}
+              href={`https://renci.org/staff/${selectedPerson.slug}`}
+              linkText="View Profile"
+            />
+          )}
         </Stack>
 
         <Controller
@@ -135,9 +129,12 @@ export default function ArchivePersonForm() {
               required
               clearable
               placeholder="Pick a date"
-              helperText="Last day / date the archival takes effect."
+              description="Last day / date the archival takes effect."
               error={errors.effectiveDate?.message}
-              styles={{ label: { fontWeight: 600, fontSize: '0.875rem', marginBottom: 4 } }}
+              styles={{
+                label: { fontWeight: 600, fontSize: '0.875rem', marginBottom: 4 },
+                description: { fontSize: '0.8rem', color: '#555' },
+              }}
             />
           )}
         />
@@ -157,20 +154,8 @@ export default function ArchivePersonForm() {
           )}
         />
 
-        <Controller
-          name="additionalContext"
-          control={control}
-          render={({ field }) => (
-            <LongTextInput
-              {...field}
-              label="Additional context, if any"
-              error={errors.additionalContext?.message}
-            />
-          )}
-        />
-
         <Paper radius="md" p="md" style={{ background: '#fff8f0', border: '1px solid #f59e0b' }}>
-          <Text size="xs" c="dimmed">
+          <Text size="sm" c="dimmed">
             Archiving a person sets their profile to inactive. Their profile page will no longer
             be publicly accessible. The implementing team will review this request before making
             any changes.
