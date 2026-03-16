@@ -48,7 +48,7 @@ export default function SlugConfirmation({ slug, href, linkText, noHelper = fals
     <Stack gap={4}>
       <ReadOnlyField label="Slug" value={slug} />
       {!noHelper && (
-        <Text size="sm" c="dimmed">
+        <Text size="sm" c="gray.7">
           {slugHelperText(entity)}
         </Text>
       )}

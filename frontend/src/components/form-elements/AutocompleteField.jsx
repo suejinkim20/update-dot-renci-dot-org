@@ -54,7 +54,7 @@ export default function AutocompleteField({
       <Stack gap={0}>
         <Text size="sm" fw={500} lh={1.3}>{item.name}</Text>
         {item.slug && (
-          <Text size="xs" c="dimmed" lh={1.2} ff="monospace">{item.slug}</Text>
+          <Text size="xs" c="gray.7" lh={1.2} ff="monospace">{item.slug}</Text>
         )}
       </Stack>
     </Combobox.Option>
@@ -93,7 +93,7 @@ export default function AutocompleteField({
         </Combobox.Dropdown>
       </Combobox>
       {helperText && !error && (
-        <Text size="sm" c="dimmed" mt={2}>
+        <Text size="sm" c="gray.7" mt={2}>
           {helperText}
         </Text>
       )}

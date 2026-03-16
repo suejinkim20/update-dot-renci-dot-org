@@ -80,7 +80,7 @@ function OrgMiniForm({ index, value = {}, onChange, onRemove, showRemove }) {
     <Paper withBorder p="sm" radius="sm">
       <Stack gap="xs">
         <Group justify="space-between" align="center">
-          <Text size="xs" fw={500} c="dimmed">New organization {index + 1}</Text>
+          <Text size="xs" fw={500} c="gray.7">New organization {index + 1}</Text>
           {showRemove && (
             <ActionIcon size="sm" color="red" variant="subtle" onClick={onRemove}>
               <IconTrash size={14} />
@@ -397,7 +397,7 @@ export default function UpdateProjectForm() {
             <Divider />
             <Box>
               <Title order={4} mb="xs">Declare Changes</Title>
-              <Text size="sm" c="dimmed" mb="md">
+              <Text size="sm" c="gray.7" mb="md">
                 Add one block per change. Each block becomes a separate action item on the ticket.
               </Text>
               <Stack gap="md">

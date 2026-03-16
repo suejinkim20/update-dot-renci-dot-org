@@ -55,7 +55,7 @@ export default function Header() {
               >
                 RENCI
               </Text>
-              <Text size="xs" c="dimmed" style={{ lineHeight: 1.2 }}>
+              <Text size="xs" c="gray.7" style={{ lineHeight: 1.2 }}>
                 Website Change Requests
               </Text>
             </Box>

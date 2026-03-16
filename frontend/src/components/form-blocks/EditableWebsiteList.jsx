@@ -61,7 +61,7 @@ export default function EditableWebsiteList({ currentItems = [], value, onChange
       {/* Current items — bulleted list, read-only, shown in Update forms only */}
       {hasCurrentItems && (
         <Box>
-          <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={6}>
+          <Text size="xs" fw={500} c="gray.7" tt="uppercase" lts={0.5} mb={6}>
             Current websites
           </Text>
           <List size="sm" spacing={4}>
@@ -69,7 +69,7 @@ export default function EditableWebsiteList({ currentItems = [], value, onChange
               <List.Item key={i}>
                 <Group gap={6} wrap="nowrap" align="center">
                   {type && (
-                    <Text size="xs" c="dimmed" style={{ flexShrink: 0 }}>
+                    <Text size="xs" c="gray.7" style={{ flexShrink: 0 }}>
                       {LINK_TYPES.find((t) => t.value === type)?.label ?? type}:
                     </Text>
                   )}
@@ -98,7 +98,7 @@ export default function EditableWebsiteList({ currentItems = [], value, onChange
             ))}
           </List>
           <Divider my="sm" variant="dashed" />
-          <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={6}>
+          <Text size="xs" fw={500} c="gray.7" tt="uppercase" lts={0.5} mb={6}>
             Add websites
           </Text>
         </Box>

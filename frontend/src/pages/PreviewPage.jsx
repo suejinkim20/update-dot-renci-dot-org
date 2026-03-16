@@ -86,10 +86,10 @@ const UPDATE_PROJECT_FIELDS = [
 function SectionHeader({ name, file }) {
   return (
     <Group gap="xs" align="baseline" mb="md">
-      <Text fw={700} size="sm" tt="uppercase" c="dimmed" style={{ letterSpacing: '0.06em' }}>
+      <Text fw={700} size="sm" tt="uppercase" c="gray.7" style={{ letterSpacing: '0.06em' }}>
         {name}
       </Text>
-      <Code fz="xs" c="dimmed">{file}</Code>
+      <Code fz="xs" c="gray.7">{file}</Code>
     </Group>
   );
 }
@@ -118,7 +118,7 @@ export default function PreviewPage() {
           <Title order={2}>Field Components</Title>
           <Badge variant="light" color="blue" size="sm">RN-196</Badge>
         </Group>
-        <Text c="dimmed" size="sm" mt={4}>
+        <Text c="gray.7" size="sm" mt={4}>
           Preview only — not a real form path. Remove or gate behind{' '}
           <Code fz="xs">import.meta.env.DEV</Code> before launch.
         </Text>
@@ -203,7 +203,7 @@ export default function PreviewPage() {
         {/* ── AutocompleteField ──────────────────────────────────────────── */}
         <Paper withBorder p="lg" radius="md">
           <SectionHeader name="AutocompleteField" file="components/fields/AutocompleteField.jsx" />
-          <Text size="xs" c="dimmed" mb="sm">
+          <Text size="xs" c="gray.7" mb="sm">
             Try typing "fabric" or "irods" — slug appears as subtitle on each option and
             as a read-only confirmation after selection.
           </Text>
@@ -225,7 +225,7 @@ export default function PreviewPage() {
         {/* ── ReadOnlyField ──────────────────────────────────────────────── */}
         <Paper withBorder p="lg" radius="md">
           <SectionHeader name="ReadOnlyField" file="components/fields/ReadOnlyField.jsx" />
-          <Text size="xs" c="dimmed" mb="sm">
+          <Text size="xs" c="gray.7" mb="sm">
             Used on Update/Archive forms to show existing data above a change input.
           </Text>
           <Stack gap="sm">
@@ -285,7 +285,7 @@ export default function PreviewPage() {
         {/* ── FieldSelector ──────────────────────────────────────────────── */}
         <Paper withBorder p="lg" radius="md">
           <SectionHeader name="FieldSelector" file="components/fields/FieldSelector.jsx" />
-          <Text size="xs" c="dimmed" mb="sm">
+          <Text size="xs" c="gray.7" mb="sm">
             The "change block" for Update forms. Select a field to see its input render below.
             Add blocks to simulate multiple changes in one submission.
           </Text>

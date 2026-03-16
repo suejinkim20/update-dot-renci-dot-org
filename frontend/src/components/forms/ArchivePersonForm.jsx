@@ -153,7 +153,7 @@ export default function ArchivePersonForm() {
         />
 
         <Paper radius="md" p="md" style={{ background: '#fff8f0', border: '1px solid #f59e0b' }}>
-          <Text size="sm" c="dimmed">
+          <Text size="sm" c="gray.7">
             Archiving a person sets their profile to inactive. Their profile page will no longer
             be publicly accessible. The implementing team will review this request before making
             any changes.

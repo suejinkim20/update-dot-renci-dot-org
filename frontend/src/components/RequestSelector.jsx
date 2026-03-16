@@ -71,7 +71,7 @@ export default function RequestSelector() {
           <Stack gap="md">
             <Text
               size="sm"
-              c="dimmed"
+              c="gray.7"
               fw={500}
               style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}
             >

@@ -21,7 +21,7 @@ function RemovePills({ currentItems = [], value = [], onChange, emptyMessage }) 
   };
 
   if (currentItems.length === 0) {
-    return <Text size="sm" c="dimmed">{emptyMessage ?? 'None currently listed.'}</Text>;
+    return <Text size="sm" c="gray.7">{emptyMessage ?? 'None currently listed.'}</Text>;
   }
 
   return (

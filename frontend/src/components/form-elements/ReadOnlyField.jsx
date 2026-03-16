@@ -25,12 +25,12 @@ export default function ReadOnlyField({ label, value, isHtml = false }) {
         padding:          '0.5rem 0.75rem',
       }}
     >
-      <Text size="xs" c="dimmed" fw={500} tt="uppercase" lts={0.5} mb={2}>
+      <Text size="xs" c="gray.7" fw={500} tt="uppercase" lts={0.5} mb={2}>
         {label}
       </Text>
 
       {isEmpty ? (
-        <Text size="sm" c="dimmed" fs="italic">
+        <Text size="sm" c="gray.7" fs="italic">
           Not provided
         </Text>
       ) : isHtml ? (

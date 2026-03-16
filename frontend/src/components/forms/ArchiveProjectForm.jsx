@@ -127,7 +127,7 @@ export default function ArchiveProjectForm() {
         />
 
         <Paper radius="md" p="md" style={{ background: '#fff8f0', border: '1px solid #f59e0b' }}>
-          <Text size="sm" c="dimmed">
+          <Text size="sm" c="gray.7">
             Archiving a project sets it to inactive. The project page remains publicly
             accessible but will no longer appear in active project listings.
             The implementing team will review this request before making any changes.

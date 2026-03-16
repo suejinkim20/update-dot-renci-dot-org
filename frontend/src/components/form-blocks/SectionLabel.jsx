@@ -11,7 +11,7 @@ import { Text } from '@mantine/core';
  */
 export default function SectionLabel({ children }) {
   return (
-    <Text size="xs" fw={500} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.04em' }}>
+    <Text size="xs" fw={500} c="gray.7" tt="uppercase" style={{ letterSpacing: '0.04em' }}>
       {children}
     </Text>
   );

@@ -90,7 +90,7 @@ export default function FieldSelector({
       <Stack gap="sm">
         {/* Block header */}
         <Group justify="space-between" align="center">
-          <Text fw={600} size="sm" c="dimmed">
+          <Text fw={600} size="sm" c="gray.7">
             {blockIndex != null ? `Change ${blockIndex}` : 'Change'}
           </Text>
           {onRemove && (

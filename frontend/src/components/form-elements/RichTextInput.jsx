@@ -146,7 +146,7 @@ const RichTextInput = forwardRef(function RichTextInput(
                 <div dangerouslySetInnerHTML={{ __html: previewHtml }} />
               </TypographyStylesProvider>
             ) : (
-              <Text size="sm" c="dimmed" fs="italic">Nothing to preview.</Text>
+              <Text size="sm" c="gray.7" fs="italic">Nothing to preview.</Text>
             )}
           </Box>
           {error && (
@@ -156,7 +156,7 @@ const RichTextInput = forwardRef(function RichTextInput(
       </Tabs>
 
       {helperText && !error && (
-        <Text size="sm" c="dimmed" mt={4}>{helperText}</Text>
+        <Text size="sm" c="gray.7" mt={4}>{helperText}</Text>
       )}
     </Box>
   );

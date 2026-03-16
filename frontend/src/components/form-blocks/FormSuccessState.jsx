@@ -20,7 +20,7 @@ export default function FormSuccessState({ message }) {
       <Text size="sm" fw={600} c="#005b8e">
         Request submitted
       </Text>
-      <Text size="sm" c="dimmed" ta="center">
+      <Text size="sm" c="gray.7" ta="center">
         {message ??
           'Your request has been submitted. Check your email for a confirmation from the web team.'}
       </Text>

@@ -70,7 +70,7 @@ export default function AddPersonPage() {
       <Stack gap="xl">
         <Text
           size="xs"
-          c="dimmed"
+          c="gray.7"
           fw={500}
           style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}
         >

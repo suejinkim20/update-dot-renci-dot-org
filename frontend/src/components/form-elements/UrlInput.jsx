@@ -43,7 +43,7 @@ export default function UrlInput({
         {...rest}
       />
       {helperText && !error && (
-        <Text size="sm" c="dimmed" mt={2}>
+        <Text size="sm" c="gray.7" mt={2}>
           {helperText}
         </Text>
       )}

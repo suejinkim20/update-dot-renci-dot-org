@@ -105,7 +105,7 @@ export default function RepeatableField({
             )}
           </Text>
           {helperText && (
-            <Text size="xs" c="dimmed" mt={2}>
+            <Text size="xs" c="gray.7" mt={2}>
               {helperText}
             </Text>
           )}
@@ -123,7 +123,7 @@ export default function RepeatableField({
 
       {/* Rows */}
       {items.length === 0 ? (
-        <Text size="sm" c="dimmed" fs="italic" py={4}>
+        <Text size="sm" c="gray.7" fs="italic" py={4}>
           {emptyMessage}
         </Text>
       ) : (

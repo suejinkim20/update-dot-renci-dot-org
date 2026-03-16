@@ -28,7 +28,7 @@ export default function CurrentDataModal({ opened, onClose, title, fields = [] }
       <Stack gap="sm">
         {fields.map(({ label, value, isHtml, isWebsites, isPublications, isList }) => (
           <Box key={label}>
-            <Text size="xs" c="dimmed" fw={500} tt="uppercase" lts={0.5} mb={2}>
+            <Text size="xs" c="gray.7" fw={500} tt="uppercase" lts={0.5} mb={2}>
               {label}
             </Text>
 
@@ -55,7 +55,7 @@ export default function CurrentDataModal({ opened, onClose, title, fields = [] }
 // ---------------------------------------------------------------------------
 
 function HtmlValue({ value }) {
-  if (!value) return <Text size="sm" c="dimmed">—</Text>;
+  if (!value) return <Text size="sm" c="gray.7">—</Text>;
   return (
     <Box
       style={{ fontSize: '0.875rem' }}
@@ -66,7 +66,7 @@ function HtmlValue({ value }) {
 
 function NameList({ items }) {
   if (!Array.isArray(items) || items.length === 0) {
-    return <Text size="sm" c="dimmed">—</Text>;
+    return <Text size="sm" c="gray.7">—</Text>;
   }
   const sorted = [...items].sort((a, b) =>
     (a.name || '').localeCompare(b.name || '')
@@ -84,7 +84,7 @@ function NameList({ items }) {
 
 function WebsiteList({ items }) {
   if (!Array.isArray(items) || items.length === 0) {
-    return <Text size="sm" c="dimmed">—</Text>;
+    return <Text size="sm" c="gray.7">—</Text>;
   }
   return (
     <List size="sm" spacing={4}>
@@ -108,14 +108,14 @@ function WebsiteList({ items }) {
 
 function PublicationList({ items }) {
   if (!Array.isArray(items) || items.length === 0) {
-    return <Text size="sm" c="dimmed">—</Text>;
+    return <Text size="sm" c="gray.7">—</Text>;
   }
   return (
     <List size="sm" spacing={8}>
       {items.map((pub, i) => (
         <List.Item key={i}>
           <Text size="sm">{pub.title || '(untitled)'}</Text>
-          <Text size="xs" c="dimmed">
+          <Text size="xs" c="gray.7">
             {pub.datePublished ? `${pub.datePublished}` : ''}
             {pub.datePublished && pub.doi ? ' · ' : ''}
             {pub.doi && (

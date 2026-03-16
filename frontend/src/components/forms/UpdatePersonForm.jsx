@@ -72,7 +72,7 @@ function EditPublications({ currentItems = [], value, onChange }) {
     <Stack gap="sm">
       {hasCurrentItems && (
         <Box>
-          <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={6}>
+          <Text size="xs" fw={500} c="gray.7" tt="uppercase" lts={0.5} mb={6}>
             Current publications
           </Text>
           <Stack gap={6}>
@@ -80,7 +80,7 @@ function EditPublications({ currentItems = [], value, onChange }) {
               <Box key={i}>
                 <Text size="sm">{pub.title || '(untitled)'}</Text>
                 <Group gap="xs">
-                  {pub.datePublished && <Text size="xs" c="dimmed">{pub.datePublished}</Text>}
+                  {pub.datePublished && <Text size="xs" c="gray.7">{pub.datePublished}</Text>}
                   {pub.doi && (
                     <Text
                       component="a"
@@ -100,17 +100,17 @@ function EditPublications({ currentItems = [], value, onChange }) {
             ))}
           </Stack>
           <Divider my="sm" variant="dashed" />
-          <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={4}>
+          <Text size="xs" fw={500} c="gray.7" tt="uppercase" lts={0.5} mb={4}>
             Add publications
           </Text>
-          <Text size="sm" c="dimmed" mb={6}>
+          <Text size="sm" c="gray.7" mb={6}>
             Enter the DOI for each publication. The implementing team will link the full record.
             A DOI looks like: <em>10.1000/xyz123</em>
           </Text>
         </Box>
       )}
       {!hasCurrentItems && (
-        <Text size="sm" c="dimmed" mb={4}>
+        <Text size="sm" c="gray.7" mb={4}>
           Enter the DOI for each publication. The implementing team will link the full record.
           A DOI looks like: <em>10.1000/xyz123</em>
         </Text>
@@ -172,7 +172,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
     case 'name':
       return (
         <Stack gap="sm">
-          <Text size="sm" c="dimmed">
+          <Text size="sm" c="gray.7">
             Check the name components you want to update. At least one must be selected.
           </Text>
           {[
@@ -646,7 +646,7 @@ export default function UpdatePersonForm() {
             <Divider />
             <Box>
               <Title order={4} mb="xs">Declare Changes</Title>
-              <Text size="sm" c="dimmed" mb="md">
+              <Text size="sm" c="gray.7" mb="md">
                 Add one block per change. Each block becomes a separate action item on the ticket.
               </Text>
               <Stack gap="md">
