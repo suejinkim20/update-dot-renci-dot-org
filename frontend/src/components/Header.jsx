@@ -1,12 +1,11 @@
 // frontend/src/components/Header.jsx
-import { Box, Group, Text, Container } from '@mantine/core';
-import { Link } from 'react-router-dom';
-// Option A — import from src/assets (Vite processes it):
-// import renciLogo from '../assets/renci-logo-simple.png';
-// Option B — place file in public/ and reference directly:
-// const renciLogo = '/renci-logo-simple.png';
+
+import { Box, Group, Text, Container, Button } from '@mantine/core';
+import { useNavigate } from 'react-router-dom';
 
 export default function Header() {
+  const navigate = useNavigate();
+
   return (
     <Box
       component="header"
@@ -18,32 +17,18 @@ export default function Header() {
         borderBottom: '1px solid #e8e8e8',
       }}
     >
-      {/* Top accent line — two-tone rule */}
+      {/* Two-tone top accent rule */}
       <Box style={{ display: 'flex', height: 4 }}>
         <Box style={{ flex: 2, background: '#005b8e' }} />
         <Box style={{ flex: 1, background: '#00b4d8' }} />
       </Box>
 
       <Container size="sm" py="sm">
-        <Group gap="xs" align="center">
-          <Link
-            to="/"
-            aria-label="RENCI Website Change Requests — return to home"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              textDecoration: 'none',
-              borderRadius: 6,
-              // Ensure focus ring is visible for keyboard users
-              outline: 'none',
-            }}
-            // Mantine's global focus-visible styles will apply,
-            // but add an explicit fallback for safety
-            onFocus={(e) => e.currentTarget.style.boxShadow = '0 0 0 2px #005b8e'}
-            onBlur={(e) => e.currentTarget.style.boxShadow = 'none'}
-          >
-            {/* Swap this block for <img> once logo asset is ready */}
+        <Group justify="space-between" align="center">
+
+          {/* Branding — not a link, just identity */}
+          <Box style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {/* Swap for <img> once logo asset is ready */}
             <Box
               style={{
                 width: 36,
@@ -61,7 +46,6 @@ export default function Header() {
                 R
               </Text>
             </Box>
-
             <Box>
               <Text
                 size="sm"
@@ -75,7 +59,18 @@ export default function Header() {
                 Website Change Requests
               </Text>
             </Box>
-          </Link>
+          </Box>
+
+          {/* New Request — always visible, navigates to home */}
+          <Button
+            variant="filled"
+            size="xs"
+            onClick={() => navigate('/')}
+            style={{ flexShrink: 0, background: '#005b8e' }}
+          >
+            New Request
+          </Button>
+
         </Group>
       </Container>
     </Box>
