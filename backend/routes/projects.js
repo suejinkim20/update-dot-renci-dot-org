@@ -39,43 +39,50 @@ router.post('/', async (req, res) => {
     fundingOrgs,
     partnerOrgs,
     websites,
-    reviewRequests = [],
   } = req.body;
 
   try {
     const boardId = process.env.MONDAY_BOARD_ID;
     const today = new Date().toISOString().slice(0, 10);
 
-    const formatTags = (arr) => {
-      if (!Array.isArray(arr) || arr.length === 0) return '(none)';
+    const formatList = (arr) => {
+      if (!Array.isArray(arr) || arr.length === 0) return 'None provided';
       return arr
-        .map((v) => (typeof v === 'object' && v !== null ? v.name : v))
+        .map((v) => (typeof v === 'object' && v !== null ? v.name ?? v.slug : v))
         .join(', ');
     };
 
     const formatWebsites = (arr) => {
-      if (!Array.isArray(arr) || arr.length === 0) return '(none)';
-      return arr.map((w) => w.url).join('\n');
+      if (!Array.isArray(arr) || arr.length === 0) return 'None provided';
+      return arr.map((w) => {
+        const type = w.type ? `${w.type}: ` : '';
+        return `${type}${w.url}`;
+      }).join('\n');
     };
 
     const descriptionText = [
-      `Submitter: ${submitterEmail}`,
-      `Name: ${name || '(not provided)'}`,
-      `Slug: ${slug || '(not provided)'}`,
-      `Description: ${description || '(not provided)'}`,
-      `RENCI Role: ${renciRole || '(not provided)'}`,
-      `Owning Group: ${owningGroup || '(not provided)'}`,
-      `Contributors: ${formatTags(people)}`,
-      `Funding Orgs: ${formatTags(fundingOrgs)}`,
-      `Partner Orgs: ${formatTags(partnerOrgs)}`,
+      `New project requested by ${submitterEmail}.`,
+      '',
+      `Name: ${name || 'Not provided'}`,
+      `Slug suggestion: ${slug?.trim() || 'None — team will generate'}`,
+      `Owning Group: ${owningGroup || 'Not provided'}`,
+      '',
+      `Description:\n${description || 'Not provided'}`,
+      '',
+      `RENCI's Role:\n${renciRole || 'Not provided'}`,
+      '',
+      `Contributors: ${formatList(people)}`,
+      `Funding Organizations: ${formatList(fundingOrgs)}`,
+      `Partner Organizations: ${formatList(partnerOrgs)}`,
+      '',
       `Websites:\n${formatWebsites(websites)}`,
     ].join('\n');
 
     const columnValues = {
-      [process.env.MONDAY_COL_STATUS]: { label: 'New' },
-      [process.env.MONDAY_COL_DATE]: { date: today },
-      [process.env.MONDAY_COL_CONTENT_TYPE]: { labels: ['Project'] },
-      [process.env.MONDAY_COL_DESCRIPTION]: { text: descriptionText },
+      [process.env.MONDAY_COL_STATUS]:          { label: 'New' },
+      [process.env.MONDAY_COL_DATE]:            { date: today },
+      [process.env.MONDAY_COL_CONTENT_TYPE]:    { labels: ['Project'] },
+      [process.env.MONDAY_COL_DESCRIPTION]:     { text: descriptionText },
       [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
     };
 
@@ -84,37 +91,28 @@ router.post('/', async (req, res) => {
 
     const subitems = [];
 
+    // Required to publish — flag if missing
     const publishRequired = [
-      { key: name, label: 'Project Name' },
+      { key: name,        label: 'Project Name' },
       { key: owningGroup, label: 'Owning Group' },
       { key: description, label: 'Description' },
-      { key: renciRole, label: "RENCI's Role" },
+      { key: renciRole,   label: "RENCI's Role" },
     ];
     for (const { key, label } of publishRequired) {
       if (!key || (typeof key === 'string' && key.trim() === '')) {
-        subitems.push(`Follow up: ${label} not provided`);
+        subitems.push(`Follow up: ${label} not provided — required before publishing`);
       }
     }
 
+    // Important but not publish-blocking
     const importantFields = [
-      { key: Array.isArray(people) && people.length > 0,      label: 'Contributors' },
+      { key: Array.isArray(people)      && people.length > 0,      label: 'Contributors' },
       { key: Array.isArray(fundingOrgs) && fundingOrgs.length > 0, label: 'Funding Organizations' },
       { key: Array.isArray(partnerOrgs) && partnerOrgs.length > 0, label: 'Partner Organizations' },
-      { key: slug?.trim(), label: 'Slug' },
+      { key: slug?.trim(),                                          label: 'Slug' },
     ];
     for (const { key, label } of importantFields) {
       if (!key) subitems.push(`Follow up: ${label} not provided`);
-    }
-
-    const reviewFieldLabels = {
-      name: 'Project Name',
-      description: 'Description',
-      renciRole: "RENCI's Role",
-      slug: 'Slug',
-    };
-    for (const fieldName of reviewRequests) {
-      const label = reviewFieldLabels[fieldName];
-      if (label) subitems.push(`Review: ${label}`);
     }
 
     for (const subitemName of subitems) {
@@ -141,22 +139,22 @@ router.post('/update', async (req, res) => {
   const { submitterEmail, slug, changes } = req.body;
 
   const changeSummary = changes
-    .map((c) => `${c.label || c.field}: ${formatChangeValue(c.value)}`)
-    .join('\n');
+    .map((c) => `${c.label || c.field}:\n${formatChangeValue(c.value)}`)
+    .join('\n\n');
 
   const descriptionText = [
-    `Submitter: ${submitterEmail}`,
-    `Slug: ${slug}`,
+    `Update request submitted by ${submitterEmail}.`,
+    `Project: ${slug}`,
     '',
-    'Requested Changes:',
+    'Requested changes:',
     changeSummary,
   ].join('\n');
 
   const columnValues = {
-    [process.env.MONDAY_COL_STATUS]: { label: 'New' },
-    [process.env.MONDAY_COL_DATE]: { date: new Date().toISOString().slice(0, 10) },
-    [process.env.MONDAY_COL_CONTENT_TYPE]: { labels: ['Project'] },
-    [process.env.MONDAY_COL_DESCRIPTION]: { text: descriptionText },
+    [process.env.MONDAY_COL_STATUS]:          { label: 'New' },
+    [process.env.MONDAY_COL_DATE]:            { date: new Date().toISOString().slice(0, 10) },
+    [process.env.MONDAY_COL_CONTENT_TYPE]:    { labels: ['Project'] },
+    [process.env.MONDAY_COL_DESCRIPTION]:     { text: descriptionText },
     [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
   };
 
@@ -198,17 +196,19 @@ router.post('/archive', async (req, res) => {
     const today = new Date().toISOString().slice(0, 10);
 
     const descriptionText = [
-      `Submitter: ${submitterEmail}`,
+      `Archive request submitted by ${submitterEmail}.`,
+      '',
       `Project: ${name || slug}`,
       `Slug: ${slug}`,
+      '',
       `Reason: ${reason}`,
     ].join('\n');
 
     const columnValues = {
-      [process.env.MONDAY_COL_STATUS]: { label: 'New' },
-      [process.env.MONDAY_COL_DATE]: { date: today },
-      [process.env.MONDAY_COL_CONTENT_TYPE]: { labels: ['Project'] },
-      [process.env.MONDAY_COL_DESCRIPTION]: { text: descriptionText },
+      [process.env.MONDAY_COL_STATUS]:          { label: 'New' },
+      [process.env.MONDAY_COL_DATE]:            { date: today },
+      [process.env.MONDAY_COL_CONTENT_TYPE]:    { labels: ['Project'] },
+      [process.env.MONDAY_COL_DESCRIPTION]:     { text: descriptionText },
       [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
     };
 
@@ -230,17 +230,21 @@ function formatChangeValue(value) {
   if (Array.isArray(value)) {
     if (value.length === 0) return '(none)';
     return value
-      .map((v) => (typeof v === 'object' ? v.name || v.url || JSON.stringify(v) : String(v)))
+      .map((v) => (typeof v === 'object' ? v.name || v.url || v.doi || JSON.stringify(v) : String(v)))
       .join(', ');
   }
   if (typeof value === 'object' && value !== null) {
     if ('add' in value || 'remove' in value) {
       const parts = [];
-      if (value.remove?.length) parts.push(`remove: ${value.remove.join(', ')}`);
-      if (value.add?.length) parts.push(`add: ${formatChangeValue(value.add)}`);
-      return parts.length ? parts.join('; ') : '(no changes)';
+      if (value.remove?.length) {
+        parts.push(`Remove: ${value.remove.join(', ')}`);
+      }
+      if (value.add?.length) {
+        parts.push(`Add: ${formatChangeValue(value.add)}`);
+      }
+      return parts.length ? parts.join('\n') : '(no changes)';
     }
-    return value.name || value.url || JSON.stringify(value);
+    return value.name || value.url || value.doi || JSON.stringify(value);
   }
   return String(value ?? '');
 }
