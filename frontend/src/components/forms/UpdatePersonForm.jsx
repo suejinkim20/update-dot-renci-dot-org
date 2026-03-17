@@ -52,6 +52,24 @@ const FIELD_OPTIONS = [
   { value: 'other',         label: 'Other' },
 ];
 
+// Slim a relational object down to { name, slug, id } only.
+// Prevents full normalized records (with description, people, websites, etc.)
+// from bloating the payload and causing 403 errors on submission.
+function slimObject(v) {
+  if (typeof v === 'object' && v !== null) {
+    return { name: v.name, slug: v.slug, id: v.id };
+  }
+  return v;
+}
+
+function slimRelational(value) {
+  if (!value || typeof value !== 'object') return value;
+  return {
+    add:    Array.isArray(value.add)    ? value.add.map(slimObject)    : [],
+    remove: Array.isArray(value.remove) ? value.remove.map(slimObject) : [],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Publications repeatable editor
 // ---------------------------------------------------------------------------
@@ -72,7 +90,7 @@ function EditPublications({ currentItems = [], value, onChange }) {
     <Stack gap="sm">
       {hasCurrentItems && (
         <Box>
-          <Text size="xs" fw={500} c="gray.7" tt="uppercase" lts={0.5} mb={6}>
+          <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={6}>
             Current publications
           </Text>
           <Stack gap={6}>
@@ -80,7 +98,7 @@ function EditPublications({ currentItems = [], value, onChange }) {
               <Box key={i}>
                 <Text size="sm">{pub.title || '(untitled)'}</Text>
                 <Group gap="xs">
-                  {pub.datePublished && <Text size="xs" c="gray.7">{pub.datePublished}</Text>}
+                  {pub.datePublished && <Text size="xs" c="dimmed">{pub.datePublished}</Text>}
                   {pub.doi && (
                     <Text
                       component="a"
@@ -100,7 +118,7 @@ function EditPublications({ currentItems = [], value, onChange }) {
             ))}
           </Stack>
           <Divider my="sm" variant="dashed" />
-          <Text size="xs" fw={500} c="gray.7" tt="uppercase" lts={0.5} mb={4}>
+          <Text size="xs" fw={500} c="dimmed" tt="uppercase" lts={0.5} mb={4}>
             Add publications
           </Text>
           <Text size="sm" c="gray.7" mb={6}>
@@ -172,7 +190,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
     case 'name':
       return (
         <Stack gap="sm">
-          <Text size="sm" c="gray.7">
+          <Text size="sm" c="dimmed">
             Check the name components you want to update. At least one must be selected.
           </Text>
           {[
@@ -473,6 +491,7 @@ export default function UpdatePersonForm() {
   const [modalOpen, setModalOpen] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [fieldSelections, setFieldSelections] = useState({});
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const {
     control,
@@ -536,7 +555,15 @@ export default function UpdatePersonForm() {
         const fieldKey = fieldSelections[i];
         if (!fieldKey) return null;
         const label = FIELD_OPTIONS.find((o) => o.value === fieldKey)?.label || fieldKey;
-        return { field: fieldKey, label, value: change.value };
+
+        // Slim relational fields to { name, slug, id } only before submitting.
+        // Full normalized records cause oversized payloads and 403 errors.
+        let value = change.value;
+        if (fieldKey === 'projects' || fieldKey === 'groups') {
+          value = slimRelational(value);
+        }
+
+        return { field: fieldKey, label, value };
       })
       .filter(Boolean);
 
@@ -547,7 +574,7 @@ export default function UpdatePersonForm() {
         body: JSON.stringify({
           submitterEmail: data.submitterEmail,
           slug:           data.slug,
-          name:           selectedPerson?.name || null,  // ← added
+          name:           selectedPerson?.name || null,
           changes,
         }),
       });
@@ -568,11 +595,12 @@ export default function UpdatePersonForm() {
         return;
       }
 
-      navigate('/');
+      setSubmitSuccess(true);
     } catch {
       setSubmitError('An unexpected error occurred. Please try again.');
     }
   };
+  if (submitSuccess) return <FormSuccessState />;
 
   // TODO: Modal is getting long — consider tabbed layout post-launch.
   const modalFields = selectedPerson
@@ -646,7 +674,7 @@ export default function UpdatePersonForm() {
             <Divider />
             <Box>
               <Title order={4} mb="xs">Declare Changes</Title>
-              <Text size="sm" c="gray.7" mb="md">
+              <Text size="sm" c="dimmed" mb="md">
                 Add one block per change. Each block becomes a separate action item on the ticket.
               </Text>
               <Stack gap="md">

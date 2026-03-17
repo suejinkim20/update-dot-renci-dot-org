@@ -28,7 +28,11 @@ export default function TagsInput({
       const match = data.find(
         (item) => item.name.toLowerCase() === tag.toLowerCase()
       );
-      return match ?? tag;
+      // Return slim object only — never the full normalized record.
+      // Full records (with description, people, websites, etc.) cause
+      // oversized payloads and 403 errors on submission.
+      if (match) return { name: match.name, slug: match.slug, id: match.id };
+      return tag;
     });
     onChange(resolved);
   };

@@ -21,7 +21,7 @@ export default function Layout() {
         {/* VPN banner sits at the top of the content area, inside the page
             container — informational context, not a site-wide system alert. */}
         <Container size="sm" pt="md" pb={0}>
-          <VpnBanner />
+          {/* <VpnBanner /> */}
         </Container>
         <Outlet />
       </Box>

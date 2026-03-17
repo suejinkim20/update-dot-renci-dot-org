@@ -17,6 +17,7 @@ export default function ArchivePersonForm() {
   const [confirming, setConfirming] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const { people = [], error: peopleError } = usePeople();
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const {
     control,
@@ -64,7 +65,7 @@ export default function ArchivePersonForm() {
         return;
       }
 
-      navigate('/');
+      setSubmitSuccess(true);
     } catch {
       setSubmitError('Could not reach the server. Check your connection and try again.');
     }
@@ -82,7 +83,9 @@ export default function ArchivePersonForm() {
       />
     );
   }
-
+  
+  if (submitSuccess) return <FormSuccessState />;
+  
   return (
     <form onSubmit={(e) => { e.preventDefault(); handleSubmit(() => setConfirming(true))(); }}>
       <Stack gap="lg">

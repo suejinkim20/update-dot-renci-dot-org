@@ -60,7 +60,7 @@ export default function UpdateProjectPage() {
     <Container size="sm" py="xl">
       <Stack gap="xl">
         <Text
-          size="xs"
+          size="md"
           c="gray.7"
           fw={500}
           style={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}

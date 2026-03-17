@@ -249,6 +249,7 @@ export default function UpdateProjectForm() {
   const [modalOpen, setModalOpen] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [fieldSelections, setFieldSelections] = useState({});
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   const { control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm({
     defaultValues: { submitterEmail: '', slug: '', changes: [] },
@@ -335,12 +336,14 @@ export default function UpdateProjectForm() {
         return;
       }
 
-      navigate('/');
+      setSubmitSuccess(true);
     } catch {
       setSubmitError('An unexpected error occurred. Please try again.');
     }
   };
 
+  if (submitSuccess) return <FormSuccessState />;
+  
   const modalFields = selectedProject
     ? [
         { label: 'Name',                   value: selectedProject.name },

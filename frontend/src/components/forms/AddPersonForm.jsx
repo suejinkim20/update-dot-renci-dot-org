@@ -127,7 +127,7 @@ export default function AddPersonForm() {
   return (
     <Stack gap="xl">
       <div>
-        <Title order={3}>Add Person</Title>
+        <Title order={2}>Add Person</Title>
       </div>
 
       <FormIntro variant="add-person" />
