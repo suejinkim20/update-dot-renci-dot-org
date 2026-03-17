@@ -26,8 +26,8 @@ Run both commands from the **monorepo root**. Use the full registry path so the
 image name matches what Kubernetes will pull.
 
 ```bash
-docker build -f frontend/Dockerfile -t containers.renci.org/comms/renci-update-frontend:0.2.0 .
-docker build -f backend/Dockerfile  -t containers.renci.org/comms/renci-update-backend:0.2.0  .
+docker build -f frontend/Dockerfile -t containers.renci.org/comms/renci-update-frontend:0.2.1 .
+docker build -f backend/Dockerfile  -t containers.renci.org/comms/renci-update-backend:0.2.1  .
 ```
 
 Only rebuild when you make code changes.
@@ -42,13 +42,13 @@ docker run --rm -d \
   -p 3001:3001 \
   --name renci-backend \
   --env-file .env \
-  containers.renci.org/comms/renci-update-backend:0.2.0
+  containers.renci.org/comms/renci-update-backend:0.2.1
 
 # 2. Start the frontend (attaches to backend's network)
 docker run --rm -d \
   --name renci-frontend \
   --network container:renci-backend \
-  containers.renci.org/comms/renci-update-frontend:0.2.0
+  containers.renci.org/comms/renci-update-frontend:0.2.1
 ```
 
 Then visit [http://localhost](http://localhost) in your browser.
@@ -96,8 +96,8 @@ docker images | grep renci-update
 
 ```bash
 docker login containers.renci.org
-docker push containers.renci.org/comms/renci-update-frontend:0.2.0
-docker push containers.renci.org/comms/renci-update-backend:0.2.0
+docker push containers.renci.org/comms/renci-update-frontend:0.2.1
+docker push containers.renci.org/comms/renci-update-backend:0.2.1
 ```
 
 ### 2. Verify your cluster context
