@@ -42,9 +42,9 @@ npm run dev
 
 The app will be available at [http://localhost:5173](http://localhost:5173).
 
-### Running with Docker
+### Deployment
 
-See [DOCKER.md](./DOCKER.md) for instructions on building and running the app with Docker.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for instructions on building and running the app.
 
 ## Project structure
 
