@@ -89,6 +89,22 @@ const RichTextInput = forwardRef(function RichTextInput(
 
         <Tabs.Panel value="write">
           <Box>
+            {/* Link formatting instructions */}
+            <Box
+              style={{
+                marginTop: 6,
+                marginBottom: 6,
+                padding: '6px 10px',
+                background: 'var(--mantine-color-gray-0)',
+                border: '1px solid var(--mantine-color-gray-2)',
+                borderRadius: 'var(--mantine-radius-sm)',
+                fontSize: '0.8rem',
+                color: 'var(--mantine-color-gray-7)',
+              }}
+            >
+              To add a link: <code style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>[link text](https://url.com)</code>
+              &nbsp;— other formatting is not currently supported and will appear as plain text.
+            </Box>
             <Textarea
               ref={ref}
               name={name}
@@ -109,21 +125,7 @@ const RichTextInput = forwardRef(function RichTextInput(
               }}
               {...rest}
             />
-            {/* Link formatting instructions */}
-            <Box
-              style={{
-                marginTop: 6,
-                padding: '6px 10px',
-                background: 'var(--mantine-color-gray-0)',
-                border: '1px solid var(--mantine-color-gray-2)',
-                borderRadius: 'var(--mantine-radius-sm)',
-                fontSize: '0.8rem',
-                color: 'var(--mantine-color-dimmed)',
-              }}
-            >
-              To add a link: <code style={{ fontFamily: 'monospace', fontSize: '0.78rem' }}>[link text](https://url.com)</code>
-              &nbsp;— other formatting is not supported and will appear as plain text.
-            </Box>
+
           </Box>
         </Tabs.Panel>
 

@@ -16,9 +16,10 @@ import {
   Paper,
   Collapse,
   Checkbox,
+  Anchor
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
-import { IconAlertCircle } from '@tabler/icons-react';
+import { IconAlertCircle, IconExternalLink } from '@tabler/icons-react';
 
 import TextInput from '../form-elements/TextInput';
 import RichTextInput from '../form-elements/RichTextInput';
@@ -114,7 +115,7 @@ export default function AddPersonForm() {
         return;
       }
 
-      navigate('/');
+      setSubmitSuccess(true);
     } catch {
       setSubmitError("Unable to reach the data server. Please make sure you're connected to the VPN and try again.");
     } finally {
@@ -337,8 +338,15 @@ export default function AddPersonForm() {
             <Stack gap="sm">
               <Text size="sm">
                 Upload a headshot photo to the{' '}
-                <strong>shared org folder</strong>, labeled with this person's full name —
-                for example: <strong>{displayName || 'First Last'}</strong>.
+                <Anchor href="https://drive.google.com/drive/folders/1O2mYei1Wh_sGRC9Ro7Gz_9kVY5mUn6W1?usp=sharing" target="_blank">
+                  <strong>shared google org folder</strong>{' '}
+                  <IconExternalLink
+                    size={12}
+                    style={{ flexShrink: 0, marginTop: 3 }}
+                  />
+
+                </Anchor>
+                , with the file name: <strong>staff_lastName-firstName</strong>.
                 The implementing team will retrieve it from there.
               </Text>
               <Controller
@@ -346,7 +354,7 @@ export default function AddPersonForm() {
                 control={control}
                 render={({ field }) => (
                   <Checkbox
-                    label="I have uploaded the headshot to the shared org folder."
+                    label="I have uploaded the headshot to the shared google org folder."
                     checked={!!field.value}
                     onChange={(e) => field.onChange(e.currentTarget.checked)}
                   />

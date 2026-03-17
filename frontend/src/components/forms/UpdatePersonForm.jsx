@@ -18,6 +18,7 @@ import {
   Alert,
   Paper,
   Checkbox,
+  Anchor
 } from '@mantine/core';
 import { IconEye, IconPlus, IconTrash, IconExternalLink } from '@tabler/icons-react';
 import {
@@ -440,14 +441,21 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
       return (
         <Paper radius="md" p="md" style={{ background: '#f0f7fc', border: '1px solid #bbd6ea' }}>
           <Stack gap="sm">
-            <Text size="sm">
-              Upload the new headshot to the{' '}
-              <strong>shared org folder</strong>, labeled{' '}
-              <strong>{headshotFileName}</strong>.
-              The implementing team will retrieve it from there.
-            </Text>
+              <Text size="sm">
+                Upload a headshot photo to the{' '}
+                <Anchor href="https://drive.google.com/drive/folders/1O2mYei1Wh_sGRC9Ro7Gz_9kVY5mUn6W1?usp=sharing" target="_blank">
+                  <strong>shared google org folder</strong>{' '}
+                  <IconExternalLink
+                    size={12}
+                    style={{ flexShrink: 0, marginTop: 3 }}
+                  />
+
+                </Anchor>
+                , with the file name: <strong>staff_lastName-firstName</strong>.
+                The implementing team will retrieve it from there.
+              </Text>
             <Checkbox
-              label="I have uploaded the headshot to the shared org folder."
+              label="I have uploaded the headshot to the shared google org folder."
               checked={headshotConfirmed}
               onChange={(e) => {
                 const checked = e.currentTarget.checked;

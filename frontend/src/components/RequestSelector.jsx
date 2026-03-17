@@ -49,7 +49,7 @@ export default function RequestSelector() {
                   you need help writing or editing descriptions, bios, or other copy,
                   please use the{' '}
                   <Anchor
-                    href="https://renci.org/comms-request"
+                    href="https://bit.ly/Comms_Request_Form"
                     target="_blank"
                     rel="noopener noreferrer"
                   >

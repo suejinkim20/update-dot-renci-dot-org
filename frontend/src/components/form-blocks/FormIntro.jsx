@@ -13,18 +13,18 @@ import { IconInfoCircle } from '@tabler/icons-react';
 const CONTENT = {
   'add-project': {
     summary:
-      'Use this form to request that a new project be added to the RENCI website. Fill in as much detail as you can — the more context you provide, the faster the web team can get it live.',
+      'Use this form to request that a new project be added to the RENCI website. Fill in as much detail as you can. The more context you provide, the faster the web team can get it live.',
     guidance:
       'A project page typically includes a name, description, RENCI\'s role, owning group, contributors, and funding and partner organizations. See an example of a well-populated project page:',
-    exampleHref:  'https://renci.org/projects/example-project',
+    exampleHref:  'https://renci.org/project/robokop/',
     exampleLabel: 'Example project page',
   },
   'update-project': {
     summary:
-      'Use this form to request changes to an existing project on the RENCI website. Add one change block per field you want to update — each block becomes a separate action item on the review ticket.',
+      'Use this form to request changes to an existing project on the RENCI website. Add one change block per field you want to update. Each block becomes a separate action item on the review ticket.',
     guidance:
       'Not sure what a well-populated project looks like? See an example before you start:',
-    exampleHref:  'https://renci.org/projects/example-project',
+    exampleHref:  'https://renci.org/project/robokop/',
     exampleLabel: 'Example project page',
   },
   'add-person': {
@@ -37,7 +37,7 @@ const CONTENT = {
   },
   'update-person': {
     summary:
-      'Use this form to request changes to an existing staff profile on the RENCI website. Add one change block per field you want to update — each block becomes a separate action item on the review ticket.',
+      'Use this form to request changes to an existing staff profile on the RENCI website. Add one change block per field you want to update. Each block becomes a separate action item on the review ticket.',
     guidance:
       'Not sure what a well-populated profile looks like? See an example before you start:',
     exampleHref:  'https://renci.org/team/example-person',
@@ -60,7 +60,7 @@ export default function FormIntro({ variant }) {
       <Text size="sm" mb={6}>
         {content.summary}
       </Text>
-      <Text size="sm">
+      {/* <Text size="sm">
         {content.guidance}{' '}
         <Anchor
           href={content.exampleHref}
@@ -71,7 +71,7 @@ export default function FormIntro({ variant }) {
           {content.exampleLabel}
         </Anchor>
         .
-      </Text>
+      </Text> */}
     </Alert>
   );
 }

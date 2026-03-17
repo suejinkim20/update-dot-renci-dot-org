@@ -112,7 +112,7 @@ export default function AddProjectForm() {
         return;
       }
 
-      navigate('/');
+      setSubmitSuccess(true);
     } catch {
       setSubmitError("Unable to reach the data server. Please make sure you're connected to the VPN and try again.");
     } finally {
