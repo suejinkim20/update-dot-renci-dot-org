@@ -127,8 +127,8 @@ router.post('/', async (req, res) => {
     descriptionLines.push('HEADSHOT');
     descriptionLines.push(
       headshotConfirmed
-        ? `Confirmed uploaded — retrieve from shared folder labeled "${fullName}"`
-        : `Not yet uploaded — follow up with submitter, label file "${fullName}"`
+        ? `Confirmed uploaded — retrieve from shared google folder`
+        : `Not yet uploaded — follow up with submitter`
     );
 
     const descriptionText = descriptionLines.join('\n');
