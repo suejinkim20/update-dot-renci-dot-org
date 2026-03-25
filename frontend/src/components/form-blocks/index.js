@@ -8,3 +8,5 @@ export { default as RelationalFieldEditor } from './RelationalFieldEditor';
 export { default as SectionLabel } from './SectionLabel';
 export { default as SlugConfirmation } from './SlugConfirmation';
 export { default as SubmitterEmailField } from './SubmitterEmailField';
+export { default as OrganizationSelector } from './OrganizationSelector';
+export { default as OrgMiniForm } from './OrgMiniForm';

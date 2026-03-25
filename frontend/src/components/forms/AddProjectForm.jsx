@@ -22,6 +22,7 @@ import EditableWebsiteList from '../form-blocks/EditableWebsiteList';
 import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import FormSuccessState from '../form-blocks/FormSuccessState';
 import FormIntro from '../form-blocks/FormIntro';
+import OrganizationSelector from '../form-blocks/OrganizationSelector';
 
 import { usePeople } from '../../hooks/usePeople';
 import { useGroups } from '../../hooks/useGroups';
@@ -77,8 +78,8 @@ export default function AddProjectForm() {
       renciRole: '',
       owningGroup: null,
       people: [],
-      fundingOrgs: [],
-      partnerOrgs: [],
+      fundingOrgs: { existing: [], new: null },
+      partnerOrgs: { existing: [], new: null },
       websites: [],
     },
   });
@@ -87,8 +88,20 @@ export default function AddProjectForm() {
     setSubmitting(true);
     setSubmitError('');
 
+    // Flatten org structure: combine existing (slim objects) + new (if present)
+    const fundingOrgs = [
+      ...data.fundingOrgs.existing,
+      ...(data.fundingOrgs.new?.officialName?.trim() ? [data.fundingOrgs.new] : []),
+    ];
+    const partnerOrgs = [
+      ...data.partnerOrgs.existing,
+      ...(data.partnerOrgs.new?.officialName?.trim() ? [data.partnerOrgs.new] : []),
+    ];
+
     const payload = {
       ...data,
+      fundingOrgs,
+      partnerOrgs,
       websites: (data.websites || []).filter((w) => w.url?.trim()),
     };
 
@@ -246,14 +259,14 @@ export default function AddProjectForm() {
             name="fundingOrgs"
             control={control}
             render={({ field }) => (
-              <TagsInput
-                {...field}
+              <OrganizationSelector
                 label="Funding Organizations"
-                data={organizations || []}
-                placeholder={orgsLoading ? 'Loading organizations…' : 'Search or type and press Enter…'}
-                disabled={orgsLoading}
+                allOrganizations={organizations || []}
+                loading={orgsLoading}
+                value={field.value}
+                onChange={field.onChange}
                 error={errors.fundingOrgs?.message}
-                helperText="Search for existing organizations. Free text accepted if no match found."
+                helperText="Select existing organizations or add a new one if not listed."
               />
             )}
           />
@@ -262,14 +275,14 @@ export default function AddProjectForm() {
             name="partnerOrgs"
             control={control}
             render={({ field }) => (
-              <TagsInput
-                {...field}
+              <OrganizationSelector
                 label="Partner Organizations"
-                data={organizations || []}
-                placeholder={orgsLoading ? 'Loading organizations…' : 'Search or type and press Enter…'}
-                disabled={orgsLoading}
+                allOrganizations={organizations || []}
+                loading={orgsLoading}
+                value={field.value}
+                onChange={field.onChange}
                 error={errors.partnerOrgs?.message}
-                helperText="Search for existing organizations. Free text accepted if no match found."
+                helperText="Select existing organizations or add a new one if not listed."
               />
             )}
           />

@@ -15,7 +15,6 @@ import {
   ActionIcon,
   Alert,
   Paper,
-  TextInput,
 } from '@mantine/core';
 import { IconEye, IconPlus, IconTrash } from '@tabler/icons-react';
 import {
@@ -33,6 +32,7 @@ import CurrentDataModal from '../form-blocks/CurrentDataModal';
 import EditableWebsiteList from '../form-blocks/EditableWebsiteList';
 import RelationalFieldEditor from '../form-blocks/RelationalFieldEditor';
 import FormIntro from '../form-blocks/FormIntro';
+import OrganizationSelector from '../form-blocks/OrganizationSelector';
 import { useProjects } from '../../hooks/useProjects';
 import { useGroups } from '../../hooks/useGroups';
 import { usePeople } from '../../hooks/usePeople';
@@ -74,27 +74,6 @@ function buildGroupOptions(groups, excludeSlug = null) {
   return [...research, ...ops];
 }
 
-function OrgMiniForm({ index, value = {}, onChange, onRemove, showRemove }) {
-  const update = (field, val) => onChange({ ...value, [field]: val });
-  return (
-    <Paper withBorder p="sm" radius="sm">
-      <Stack gap="xs">
-        <Group justify="space-between" align="center">
-          <Text size="xs" fw={500} c="gray.7">New organization {index + 1}</Text>
-          {showRemove && (
-            <ActionIcon size="sm" color="red" variant="subtle" onClick={onRemove}>
-              <IconTrash size={14} />
-            </ActionIcon>
-          )}
-        </Group>
-        <TextInput label="Official name" placeholder="National Institutes of Health" required size="sm" value={value.officialName || ''} onChange={(e) => update('officialName', e.target.value)} />
-        <TextInput label="Short name / acronym" placeholder="NIH" size="sm" value={value.shortName || ''} onChange={(e) => update('shortName', e.target.value)} />
-        <TextInput label="Website URL" placeholder="https://nih.gov" size="sm" value={value.url || ''} onChange={(e) => update('url', e.target.value)} />
-      </Stack>
-    </Paper>
-  );
-}
-
 function EditContributors({ currentItems = [], allItems = [], value, onChange }) {
   const addValue    = value?.add    ?? [];
   const removeValue = value?.remove ?? [];
@@ -122,17 +101,24 @@ function EditContributors({ currentItems = [], allItems = [], value, onChange })
   );
 }
 
-function EditOrganizations({ currentItems = [], value, onChange, noun = 'organization' }) {
-  const addValue    = value?.add    ?? [{}];
+function EditOrganizations({ currentItems = [], allOrganizations = [], value, onChange, noun = 'organization' }) {
+  const addExisting = value?.addExisting ?? [];
+  const addNew      = value?.addNew ?? null;
   const removeValue = value?.remove ?? [];
-  const notify      = (patch) => onChange({ add: addValue, remove: removeValue, ...patch });
-  const updateOrgAt = (idx, updated) => notify({ add: addValue.map((o, i) => i === idx ? updated : o) });
-  const addAnother  = () => notify({ add: [...addValue, {}] });
-  const removeOrgAt = (idx) => {
-    const next = addValue.filter((_, i) => i !== idx);
-    notify({ add: next.length > 0 ? next : [{}] });
-  };
-  const filledCount = addValue.filter((o) => o.officialName?.trim()).length;
+  
+  const notify = (patch) => onChange({ 
+    addExisting, 
+    addNew, 
+    remove: removeValue, 
+    ...patch 
+  });
+
+  // Filter out orgs that are already current
+  const existingSlugs = new Set(currentItems.map((i) => i.slug));
+  const availableOrgs = allOrganizations.filter((o) => !existingSlugs.has(o.slug));
+
+  const addCount = addExisting.length + (addNew?.officialName?.trim() ? 1 : 0);
+
   return (
     <RelationalFieldEditor
       currentLabel={`Current ${noun}s`}
@@ -141,23 +127,15 @@ function EditOrganizations({ currentItems = [], value, onChange, noun = 'organiz
       removeValue={removeValue}
       onRemoveChange={(slugs) => notify({ remove: slugs })}
       emptyMessage={`No ${noun}s currently listed.`}
-      addCount={filledCount}
+      addCount={addCount}
       addPanel={
-        <Stack gap="sm">
-          {addValue.map((org, idx) => (
-            <OrgMiniForm
-              key={idx}
-              index={idx}
-              value={org}
-              onChange={(updated) => updateOrgAt(idx, updated)}
-              onRemove={() => removeOrgAt(idx)}
-              showRemove={addValue.length > 1}
-            />
-          ))}
-          <Button variant="subtle" size="xs" leftSection={<IconPlus size={14} />} onClick={addAnother} style={{ alignSelf: 'flex-start' }}>
-            Add another {noun}
-          </Button>
-        </Stack>
+        <OrganizationSelector
+          label={`Select existing ${noun}s`}
+          allOrganizations={availableOrgs}
+          value={{ existing: addExisting, new: addNew }}
+          onChange={(val) => notify({ addExisting: val.existing, addNew: val.new })}
+          helperText={`Select from the list or add a new ${noun} if not listed.`}
+        />
       }
     />
   );
@@ -211,14 +189,14 @@ function ChangeBlockInput({ fieldKey, control, index, selectedProject, people, o
       );
     case 'fundingOrgs':
       return (
-        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ add: [{}], remove: [] }}
-          render={({ field }) => <EditOrganizations currentItems={selectedProject?.fundingOrgs || []} value={field.value} onChange={field.onChange} noun="funding organization" />}
+        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ addExisting: [], addNew: null, remove: [] }}
+          render={({ field }) => <EditOrganizations currentItems={selectedProject?.fundingOrgs || []} allOrganizations={(organizations || []).map((o) => ({ name: o.name, slug: o.slug, id: o.id }))} value={field.value} onChange={field.onChange} noun="funding organization" />}
         />
       );
     case 'partnerOrgs':
       return (
-        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ add: [{}], remove: [] }}
-          render={({ field }) => <EditOrganizations currentItems={selectedProject?.partnerOrgs || []} value={field.value} onChange={field.onChange} noun="partner organization" />}
+        <Controller name={`changes.${index}.value`} control={control} defaultValue={{ addExisting: [], addNew: null, remove: [] }}
+          render={({ field }) => <EditOrganizations currentItems={selectedProject?.partnerOrgs || []} allOrganizations={(organizations || []).map((o) => ({ name: o.name, slug: o.slug, id: o.id }))} value={field.value} onChange={field.onChange} noun="partner organization" />}
         />
       );
     case 'websites':
@@ -269,8 +247,8 @@ export default function UpdateProjectForm() {
     setValue(`changes.${index}.field`, val);
     const relationalDefaults = {
       people:      { add: [], remove: [] },
-      fundingOrgs: { add: [{}], remove: [] },
-      partnerOrgs: { add: [{}], remove: [] },
+      fundingOrgs: { addExisting: [], addNew: null, remove: [] },
+      partnerOrgs: { addExisting: [], addNew: null, remove: [] },
       websites:    [],
     };
     setValue(`changes.${index}.value`, relationalDefaults[val] ?? null);
@@ -304,7 +282,24 @@ export default function UpdateProjectForm() {
         const fieldKey = fieldSelections[i];
         if (!fieldKey) return null;
         const label = FIELD_OPTIONS.find((o) => o.value === fieldKey)?.label || fieldKey;
-        return { field: fieldKey, label, value: change.value };
+        
+        // Enrich remove slugs with full objects for org fields
+        let enrichedValue = change.value;
+        if ((fieldKey === 'fundingOrgs' || fieldKey === 'partnerOrgs') && change.value?.remove) {
+          const currentItems = fieldKey === 'fundingOrgs' 
+            ? selectedProject?.fundingOrgs || []
+            : selectedProject?.partnerOrgs || [];
+          
+          enrichedValue = {
+            ...change.value,
+            remove: change.value.remove.map(slug => {
+              const found = currentItems.find(item => item.slug === slug);
+              return found || slug; // fallback to slug if not found
+            })
+          };
+        }
+        
+        return { field: fieldKey, label, value: enrichedValue };
       })
       .filter(Boolean);
 
@@ -315,7 +310,7 @@ export default function UpdateProjectForm() {
         body: JSON.stringify({
           submitterEmail: data.submitterEmail,
           slug:           data.slug,
-          name:           selectedProject?.name || null,  // ← added
+          name:           selectedProject?.name || null,
           changes,
         }),
       });

@@ -143,14 +143,56 @@ router.post('/', async (req, res) => {
     }
     if (Array.isArray(fundingOrgs) && fundingOrgs.length > 0) {
       for (const org of fundingOrgs) {
-        const orgName = typeof org === 'object' ? org.name ?? org.slug : org;
-        subitems.push({ title: `Add Funding Organization: ${orgName}`, content: null });
+        // Distinguish between existing orgs (have slug/id) and new orgs (have officialName)
+        if (org.officialName) {
+          // New organization
+          const short = org.shortName ? ` (${org.shortName})` : '';
+          const url   = org.url ? ` — ${org.url}` : '';
+          const content = [
+            'Add New Funding Organization:',
+            `- Official Name: ${org.officialName}`,
+            org.shortName ? `- Short Name: ${org.shortName}` : null,
+            org.url ? `- Website: ${org.url}` : null,
+          ].filter(Boolean).join('\n');
+          subitems.push({ title: `Add New Funding Organization: ${org.officialName}${short}${url}`, content });
+        } else {
+          // Existing organization
+          const orgName = typeof org === 'object' ? org.name ?? org.slug : org;
+          const content = typeof org === 'object' ? [
+            'Add Existing Funding Organization:',
+            `- Name: ${org.name || '(not provided)'}`,
+            `- Slug: ${org.slug || '(not provided)'}`,
+            `- ID: ${org.id || '(not provided)'}`,
+          ].join('\n') : null;
+          subitems.push({ title: `Add Funding Organization: ${orgName}`, content });
+        }
       }
     }
     if (Array.isArray(partnerOrgs) && partnerOrgs.length > 0) {
       for (const org of partnerOrgs) {
-        const orgName = typeof org === 'object' ? org.name ?? org.slug : org;
-        subitems.push({ title: `Add Partner Organization: ${orgName}`, content: null });
+        // Distinguish between existing orgs (have slug/id) and new orgs (have officialName)
+        if (org.officialName) {
+          // New organization
+          const short = org.shortName ? ` (${org.shortName})` : '';
+          const url   = org.url ? ` — ${org.url}` : '';
+          const content = [
+            'Add New Partner Organization:',
+            `- Official Name: ${org.officialName}`,
+            org.shortName ? `- Short Name: ${org.shortName}` : null,
+            org.url ? `- Website: ${org.url}` : null,
+          ].filter(Boolean).join('\n');
+          subitems.push({ title: `Add New Partner Organization: ${org.officialName}${short}${url}`, content });
+        } else {
+          // Existing organization
+          const orgName = typeof org === 'object' ? org.name ?? org.slug : org;
+          const content = typeof org === 'object' ? [
+            'Add Existing Partner Organization:',
+            `- Name: ${org.name || '(not provided)'}`,
+            `- Slug: ${org.slug || '(not provided)'}`,
+            `- ID: ${org.id || '(not provided)'}`,
+          ].join('\n') : null;
+          subitems.push({ title: `Add Partner Organization: ${orgName}`, content });
+        }
       }
     }
     if (Array.isArray(websites) && websites.length > 0) {
@@ -323,31 +365,89 @@ function buildProjectUpdateSubitems(changes) {
       }
 
       case 'fundingOrgs': {
-        const adds    = value?.add    || [];
-        const removes = value?.remove || [];
+        const addExisting = value?.addExisting || [];
+        const addNew      = value?.addNew || null;
+        const removes     = value?.remove || [];
+        
+        // Remove existing orgs
         for (const s of removes) {
-          subitems.push({ title: `Remove Funding Organization: ${typeof s === 'object' ? s.name || s.slug : s}`, content: null });
+          const orgName = typeof s === 'object' ? s.name || s.slug : s;
+          const content = typeof s === 'object' ? [
+            'Remove Funding Organization:',
+            `- Name: ${s.name || '(not provided)'}`,
+            `- Slug: ${s.slug || '(not provided)'}`,
+            `- ID: ${s.id || '(not provided)'}`,
+          ].join('\n') : null;
+          subitems.push({ title: `Remove Funding Organization: ${orgName}`, content });
         }
-        for (const org of adds) {
-          const orgName = org.officialName || org.name || org.slug || org;
-          const short   = org.shortName ? ` (${org.shortName})` : '';
-          const url     = org.url ? ` — ${org.url}` : '';
-          subitems.push({ title: `Add Funding Organization: ${orgName}${short}${url}`, content: null });
+        
+        // Add existing orgs (from dropdown)
+        for (const org of addExisting) {
+          const orgName = typeof org === 'object' ? org.name || org.slug : org;
+          const content = typeof org === 'object' ? [
+            'Add Existing Funding Organization:',
+            `- Name: ${org.name || '(not provided)'}`,
+            `- Slug: ${org.slug || '(not provided)'}`,
+            `- ID: ${org.id || '(not provided)'}`,
+          ].join('\n') : null;
+          subitems.push({ title: `Add Funding Organization: ${orgName}`, content });
+        }
+        
+        // Add new org (from form)
+        if (addNew?.officialName?.trim()) {
+          const short = addNew.shortName ? ` (${addNew.shortName})` : '';
+          const url   = addNew.url ? ` — ${addNew.url}` : '';
+          const content = [
+            'Add New Funding Organization:',
+            `- Official Name: ${addNew.officialName}`,
+            addNew.shortName ? `- Short Name: ${addNew.shortName}` : null,
+            addNew.url ? `- Website: ${addNew.url}` : null,
+          ].filter(Boolean).join('\n');
+          subitems.push({ title: `Add New Funding Organization: ${addNew.officialName}${short}${url}`, content });
         }
         break;
       }
 
       case 'partnerOrgs': {
-        const adds    = value?.add    || [];
-        const removes = value?.remove || [];
+        const addExisting = value?.addExisting || [];
+        const addNew      = value?.addNew || null;
+        const removes     = value?.remove || [];
+        
+        // Remove existing orgs
         for (const s of removes) {
-          subitems.push({ title: `Remove Partner Organization: ${typeof s === 'object' ? s.name || s.slug : s}`, content: null });
+          const orgName = typeof s === 'object' ? s.name || s.slug : s;
+          const content = typeof s === 'object' ? [
+            'Remove Partner Organization:',
+            `- Name: ${s.name || '(not provided)'}`,
+            `- Slug: ${s.slug || '(not provided)'}`,
+            `- ID: ${s.id || '(not provided)'}`,
+          ].join('\n') : null;
+          subitems.push({ title: `Remove Partner Organization: ${orgName}`, content });
         }
-        for (const org of adds) {
-          const orgName = org.officialName || org.name || org.slug || org;
-          const short   = org.shortName ? ` (${org.shortName})` : '';
-          const url     = org.url ? ` — ${org.url}` : '';
-          subitems.push({ title: `Add Partner Organization: ${orgName}${short}${url}`, content: null });
+        
+        // Add existing orgs (from dropdown)
+        for (const org of addExisting) {
+          const orgName = typeof org === 'object' ? org.name || org.slug : org;
+          const content = typeof org === 'object' ? [
+            'Add Existing Partner Organization:',
+            `- Name: ${org.name || '(not provided)'}`,
+            `- Slug: ${org.slug || '(not provided)'}`,
+            `- ID: ${org.id || '(not provided)'}`,
+          ].join('\n') : null;
+          subitems.push({ title: `Add Partner Organization: ${orgName}`, content });
+        }
+        
+        // Add new org (from form)
+        if (addNew?.officialName?.trim()) {
+          const short = addNew.shortName ? ` (${addNew.shortName})` : '';
+          const url   = addNew.url ? ` — ${addNew.url}` : '';
+          const content = [
+            'Add New Partner Organization:',
+            `- Official Name: ${addNew.officialName}`,
+            addNew.shortName ? `- Short Name: ${addNew.shortName}` : null,
+            addNew.url ? `- Website: ${addNew.url}` : null,
+          ].filter(Boolean).join('\n');
+          subitems.push({ title: `Add New Partner Organization: ${addNew.officialName}${short}${url}`, content });
         }
         break;
       }
