@@ -255,6 +255,14 @@ router.post('/update', async (req, res) => {
       [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
     };
 
+    // Add WordPress link if slug provided
+    if (slug) {
+      columnValues[process.env.MONDAY_COL_WORDPRESS_LINK] = {
+        url: `https://renci.org/project/${slug}`,
+        text: `https://renci.org/project/${slug}`
+      };
+    }
+
     const item = await createItem(
       process.env.MONDAY_BOARD_ID,
       `Update Project - ${displayName}`,
@@ -267,7 +275,7 @@ router.post('/update', async (req, res) => {
         : {};
       await createSubitem(item.id, title, subitemColumnValues);
     }
-
+    console.log(`Created Monday item ${item.id} for project update request: ${JSON.stringify(columnValues)}`);
     return res.status(201).json({ success: true, itemId: item.id });
   } catch (err) {
     if (err.code === 'VPN_REQUIRED') {
@@ -312,6 +320,14 @@ router.post('/archive', async (req, res) => {
       [process.env.MONDAY_COL_DESCRIPTION]:     { text: descriptionText },
       [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
     };
+
+    // Add WordPress link if slug provided
+    if (slug) {
+      columnValues[process.env.MONDAY_COL_WORDPRESS_LINK] = {
+        url: `https://renci.org/project/${slug}`,
+        text: `https://renci.org/project/${slug}`
+      };
+    }
 
     const item = await createItem(
       boardId,

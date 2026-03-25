@@ -256,6 +256,14 @@ router.post('/update', async (req, res) => {
       [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
     };
 
+    // Add WordPress link if slug provided
+    if (slug) {
+      columnValues[process.env.MONDAY_COL_WORDPRESS_LINK] = {
+        url: `https://renci.org/staff/${slug}`,
+        text: `https://renci.org/staff/${slug}`
+      };
+    }
+
     const item = await createItem(
       process.env.MONDAY_BOARD_ID,
       `Update Person - ${displayName}`,
@@ -314,6 +322,14 @@ router.post('/archive', async (req, res) => {
       [process.env.MONDAY_COL_DESCRIPTION]:     { text: descriptionText },
       [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
     };
+
+    // Add WordPress link if slug provided
+    if (slug) {
+      columnValues[process.env.MONDAY_COL_WORDPRESS_LINK] = {
+        url: `https://renci.org/staff/${slug}`,
+        text: `https://renci.org/staff/${slug}`
+      };
+    }
 
     const item = await createItem(
       boardId,
