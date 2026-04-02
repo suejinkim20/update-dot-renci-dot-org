@@ -71,6 +71,8 @@ export default function ArchivePersonForm() {
     }
   }
 
+  if (submitSuccess) return <FormSuccessState />;
+
   if (confirming) {
     return (
       <ArchiveConfirmation
@@ -83,8 +85,6 @@ export default function ArchivePersonForm() {
       />
     );
   }
-  
-  if (submitSuccess) return <FormSuccessState />;
   
   return (
     <form onSubmit={(e) => { e.preventDefault(); handleSubmit(() => setConfirming(true))(); }}>

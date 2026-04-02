@@ -66,6 +66,8 @@ export default function ArchiveProjectForm() {
     }
   }
 
+  if (submitSuccess) return <FormSuccessState />;
+
   if (confirming) {
     return (
       <ArchiveConfirmation
@@ -78,8 +80,6 @@ export default function ArchiveProjectForm() {
       />
     );
   }
-  
-  if (submitSuccess) return <FormSuccessState />;
   
   return (
     <form onSubmit={(e) => { e.preventDefault(); handleSubmit(() => setConfirming(true))(); }}>
