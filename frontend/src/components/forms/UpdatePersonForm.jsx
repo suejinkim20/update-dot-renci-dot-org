@@ -20,7 +20,7 @@ import {
   Checkbox,
   Anchor
 } from '@mantine/core';
-import { IconEye, IconPlus, IconTrash, IconExternalLink } from '@tabler/icons-react';
+import { IconEye, IconPlus, IconTrash, IconExternalLink, IconAlertCircle } from '@tabler/icons-react';
 import {
   TextInput,
   LongTextInput,
@@ -728,16 +728,43 @@ export default function UpdatePersonForm() {
                 >
                   Add change
                 </Button>
-                {submitError && <Alert color="red" mt="xs">{submitError}</Alert>}
               </Stack>
             </Box>
 
             <Divider />
 
             <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
-            <Button type="submit" loading={isSubmitting} fullWidth>
-              Submit Update Request
-            </Button>
+
+            {submitError && (
+              <Alert
+                icon={<IconAlertCircle size={16} />}
+                color="red"
+                variant="light"
+                styles={{
+                  root: { padding: '12px 16px' },
+                  message: { fontSize: '0.875rem' }
+                }}
+              >
+                <Group justify="space-between" align="center" wrap="nowrap" gap="md">
+                  <Text size="sm" style={{ flex: 1 }}>{submitError}</Text>
+                  <Button 
+                    size="xs" 
+                    variant="outline"
+                    color="red"
+                    onClick={handleSubmit(onSubmit)}
+                    loading={isSubmitting}
+                  >
+                    Retry
+                  </Button>
+                </Group>
+              </Alert>
+            )}
+
+            {!submitError && (
+              <Button type="submit" loading={isSubmitting} fullWidth>
+                Submit Update Request
+              </Button>
+            )}
           </>
         )}
       </Stack>

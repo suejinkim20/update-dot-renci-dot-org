@@ -1,3 +1,5 @@
+// frontend/src/hooks/usePeople.js
+
 import { useFormData } from '../context/FormDataContext';
 
 /**

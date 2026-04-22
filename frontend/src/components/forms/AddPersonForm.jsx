@@ -133,17 +133,6 @@ export default function AddPersonForm() {
 
       <FormIntro variant="add-person" />
 
-      {submitError && (
-        <Alert
-          icon={<IconAlertCircle size={18} />}
-          title="Submission failed"
-          color="red"
-          variant="light"
-        >
-          {submitError}
-        </Alert>
-      )}
-
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <Stack gap="lg">
 
@@ -367,11 +356,38 @@ export default function AddPersonForm() {
 
           <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
 
-          <Group justify="flex-end">
-            <Button type="submit" loading={submitting} disabled={submitting}>
-              Submit request
-            </Button>
-          </Group>
+          {submitError && (
+            <Alert
+              icon={<IconAlertCircle size={16} />}
+              color="red"
+              variant="light"
+              styles={{
+                root: { padding: '12px 16px' },
+                message: { fontSize: '0.875rem' }
+              }}
+            >
+              <Group justify="space-between" align="center" wrap="nowrap" gap="md">
+                <Text size="sm" style={{ flex: 1 }}>{submitError}</Text>
+                <Button 
+                  size="xs" 
+                  variant="outline"
+                  color="red"
+                  onClick={handleSubmit(onSubmit)}
+                  loading={submitting}
+                >
+                  Retry
+                </Button>
+              </Group>
+            </Alert>
+          )}
+
+          {!submitError && (
+            <Group justify="flex-end">
+              <Button type="submit" loading={submitting} disabled={submitting}>
+                Submit request
+              </Button>
+            </Group>
+          )}
 
         </Stack>
       </form>

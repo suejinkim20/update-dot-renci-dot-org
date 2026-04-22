@@ -49,173 +49,175 @@ router.get('/', async (req, res) => {
 
 // ── POST /api/people ──────────────────────────────────────────────────────────
 router.post('/', async (req, res) => {
-  const result = validate('person.add', req.body);
-  if (!result.valid) {
-    return res.status(400).json({ errors: result.errors });
-  }
+  return res.status(500).json({ message: 'Testing error handling' });
 
-  const {
-    submitterEmail,
-    firstName,
-    lastName,
-    preferredName,
-    jobTitle,
-    groups,
-    startDate,
-    renciScholar,
-    renciScholarBio,
-    projects,
-    bio,
-    websites,
-    headshotConfirmed,
-  } = req.body;
+  // const result = validate('person.add', req.body);
+  // if (!result.valid) {
+  //   return res.status(400).json({ errors: result.errors });
+  // }
 
-  try {
-    const boardId    = process.env.MONDAY_BOARD_ID;
-    const today      = new Date().toISOString().slice(0, 10);
-    const fullName   = `${firstName} ${lastName}`;
-    const displayName = preferredName ? `${preferredName} ${lastName}` : fullName;
+  // const {
+  //   submitterEmail,
+  //   firstName,
+  //   lastName,
+  //   preferredName,
+  //   jobTitle,
+  //   groups,
+  //   startDate,
+  //   renciScholar,
+  //   renciScholarBio,
+  //   projects,
+  //   bio,
+  //   websites,
+  //   headshotConfirmed,
+  // } = req.body;
 
-    // ── Build description (Option C sectioned format) ─────────────────────
-    const nameNote = preferredName
-      ? `${displayName} (legal: ${fullName})`
-      : fullName;
+  // try {
+  //   const boardId    = process.env.MONDAY_BOARD_ID;
+  //   const today      = new Date().toISOString().slice(0, 10);
+  //   const fullName   = `${firstName} ${lastName}`;
+  //   const displayName = preferredName ? `${preferredName} ${lastName}` : fullName;
 
-    const bioTruncated           = truncate(bio, 'biography');
-    const renciScholarBioTruncated = renciScholar && renciScholarBio
-      ? truncate(renciScholarBio, 'RENCI Scholar bio')
-      : null;
+  //   // ── Build description (Option C sectioned format) ─────────────────────
+  //   const nameNote = preferredName
+  //     ? `${displayName} (legal: ${fullName})`
+  //     : fullName;
 
-    const descriptionLines = [
-      `New profile request submitted by ${submitterEmail}.`,
-      '',
-      'PERSON',
-      `Name: ${nameNote}`,
-      `Job Title: ${jobTitle}`,
-      `Groups: ${formatList(groups)}`,
-      `Start Date: ${startDate}`,
-    ];
+  //   const bioTruncated           = truncate(bio, 'biography');
+  //   const renciScholarBioTruncated = renciScholar && renciScholarBio
+  //     ? truncate(renciScholarBio, 'RENCI Scholar bio')
+  //     : null;
 
-    if (bioTruncated || renciScholar) {
-      descriptionLines.push('');
-      descriptionLines.push('CONTENT');
-      if (bioTruncated) {
-        descriptionLines.push(`Bio:\n${bioTruncated}`);
-      }
-      if (renciScholar) {
-        descriptionLines.push(`RENCI Scholar: Yes`);
-        if (renciScholarBioTruncated) {
-          descriptionLines.push(`RENCI Scholar Bio:\n${renciScholarBioTruncated}`);
-        }
-      }
-    }
+  //   const descriptionLines = [
+  //     `New profile request submitted by ${submitterEmail}.`,
+  //     '',
+  //     'PERSON',
+  //     `Name: ${nameNote}`,
+  //     `Job Title: ${jobTitle}`,
+  //     `Groups: ${formatList(groups)}`,
+  //     `Start Date: ${startDate}`,
+  //   ];
 
-    const websiteLines  = formatWebsites(websites);
-    const projectList   = formatList(projects);
-    if (projectList !== 'None provided' || websiteLines !== 'None provided') {
-      descriptionLines.push('');
-      descriptionLines.push('CONNECTIONS');
-      if (projectList !== 'None provided') {
-        descriptionLines.push(`Projects: ${projectList}`);
-      }
-      if (websiteLines !== 'None provided') {
-        descriptionLines.push(`Websites:\n${websiteLines}`);
-      }
-    }
+  //   if (bioTruncated || renciScholar) {
+  //     descriptionLines.push('');
+  //     descriptionLines.push('CONTENT');
+  //     if (bioTruncated) {
+  //       descriptionLines.push(`Bio:\n${bioTruncated}`);
+  //     }
+  //     if (renciScholar) {
+  //       descriptionLines.push(`RENCI Scholar: Yes`);
+  //       if (renciScholarBioTruncated) {
+  //         descriptionLines.push(`RENCI Scholar Bio:\n${renciScholarBioTruncated}`);
+  //       }
+  //     }
+  //   }
 
-    descriptionLines.push('');
-    descriptionLines.push('HEADSHOT');
-    descriptionLines.push(
-      headshotConfirmed
-        ? `Confirmed uploaded — retrieve from shared google folder`
-        : `Not yet uploaded — follow up with submitter`
-    );
+  //   const websiteLines  = formatWebsites(websites);
+  //   const projectList   = formatList(projects);
+  //   if (projectList !== 'None provided' || websiteLines !== 'None provided') {
+  //     descriptionLines.push('');
+  //     descriptionLines.push('CONNECTIONS');
+  //     if (projectList !== 'None provided') {
+  //       descriptionLines.push(`Projects: ${projectList}`);
+  //     }
+  //     if (websiteLines !== 'None provided') {
+  //       descriptionLines.push(`Websites:\n${websiteLines}`);
+  //     }
+  //   }
 
-    const descriptionText = descriptionLines.join('\n');
+  //   descriptionLines.push('');
+  //   descriptionLines.push('HEADSHOT');
+  //   descriptionLines.push(
+  //     headshotConfirmed
+  //       ? `Confirmed uploaded — retrieve from shared google folder`
+  //       : `Not yet uploaded — follow up with submitter`
+  //   );
 
-    // ── Column values ─────────────────────────────────────────────────────
-    const columnValues = {
-      [process.env.MONDAY_COL_STATUS]:          { label: 'New' },
-      [process.env.MONDAY_COL_DATE]:            { date: today },
-      [process.env.MONDAY_COL_CONTENT_TYPE]:    { labels: ['Person'] },
-      [process.env.MONDAY_COL_OPERATION]:       { labels: ['Add'] },
-      [process.env.MONDAY_COL_ITEM_NAME]:       { text: fullName },
-      [process.env.MONDAY_COL_DESCRIPTION]:     { text: descriptionText },
-      [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
-    };
+  //   const descriptionText = descriptionLines.join('\n');
 
-    const item = await createItem(boardId, `Add Person - ${fullName}`, columnValues);
+  //   // ── Column values ─────────────────────────────────────────────────────
+  //   const columnValues = {
+  //     [process.env.MONDAY_COL_STATUS]:          { label: 'New' },
+  //     [process.env.MONDAY_COL_DATE]:            { date: today },
+  //     [process.env.MONDAY_COL_CONTENT_TYPE]:    { labels: ['Person'] },
+  //     [process.env.MONDAY_COL_OPERATION]:       { labels: ['Add'] },
+  //     [process.env.MONDAY_COL_ITEM_NAME]:       { text: fullName },
+  //     [process.env.MONDAY_COL_DESCRIPTION]:     { text: descriptionText },
+  //     [process.env.MONDAY_COL_SUBMITTER_EMAIL]: { email: submitterEmail, text: submitterEmail },
+  //   };
 
-    // ── Subitems — one per submitted field ────────────────────────────────
-    const subitems = [];
+  //   const item = await createItem(boardId, `Add Person - ${fullName}`, columnValues);
 
-    // Name
-    const nameParts = [
-      `First: ${firstName}`,
-      `Last: ${lastName}`,
-      preferredName ? `Preferred: ${preferredName}` : null,
-    ].filter(Boolean).join(', ');
-    subitems.push({ title: `Name: ${nameNote}`, content: nameParts });
+  //   // ── Subitems — one per submitted field ────────────────────────────────
+  //   const subitems = [];
 
-    // Job title
-    subitems.push({ title: `Job Title: ${jobTitle}`, content: null });
+  //   // Name
+  //   const nameParts = [
+  //     `First: ${firstName}`,
+  //     `Last: ${lastName}`,
+  //     preferredName ? `Preferred: ${preferredName}` : null,
+  //   ].filter(Boolean).join(', ');
+  //   subitems.push({ title: `Name: ${nameNote}`, content: nameParts });
 
-    // Groups
-    subitems.push({ title: `Groups: ${formatList(groups)}`, content: null });
+  //   // Job title
+  //   subitems.push({ title: `Job Title: ${jobTitle}`, content: null });
 
-    // Start date
-    subitems.push({ title: `Start Date: ${startDate}`, content: null });
+  //   // Groups
+  //   subitems.push({ title: `Groups: ${formatList(groups)}`, content: null });
 
-    // Bio
-    if (bio) {
-      subitems.push({ title: 'Add Bio', content: bio });
-    }
+  //   // Start date
+  //   subitems.push({ title: `Start Date: ${startDate}`, content: null });
 
-    // RENCI Scholar
-    if (renciScholar) {
-      subitems.push({
-        title: 'RENCI Scholar: Yes',
-        content: renciScholarBio || null,
-      });
-    }
+  //   // Bio
+  //   if (bio) {
+  //     subitems.push({ title: 'Add Bio', content: bio });
+  //   }
 
-    // Projects
-    if (Array.isArray(projects) && projects.length > 0) {
-      subitems.push({ title: `Projects: ${formatList(projects)}`, content: null });
-    }
+  //   // RENCI Scholar
+  //   if (renciScholar) {
+  //     subitems.push({
+  //       title: 'RENCI Scholar: Yes',
+  //       content: renciScholarBio || null,
+  //     });
+  //   }
 
-    // Websites — one subitem per entry
-    if (Array.isArray(websites) && websites.length > 0) {
-      for (const w of websites) {
-        const type = w.type ? `${w.type}: ` : '';
-        subitems.push({ title: `Add Website: ${type}${w.url}`, content: null });
-      }
-    }
+  //   // Projects
+  //   if (Array.isArray(projects) && projects.length > 0) {
+  //     subitems.push({ title: `Projects: ${formatList(projects)}`, content: null });
+  //   }
 
-    // Headshot
-    subitems.push({
-      title: headshotConfirmed
-        ? `Headshot: confirmed uploaded — retrieve from shared folder labeled "${fullName}"`
-        : `Headshot: not yet uploaded — follow up with submitter, label file "${fullName}"`,
-      content: headshotConfirmed ? GOOGLE_FOLDER_URL : null,
-    });
+  //   // Websites — one subitem per entry
+  //   if (Array.isArray(websites) && websites.length > 0) {
+  //     for (const w of websites) {
+  //       const type = w.type ? `${w.type}: ` : '';
+  //       subitems.push({ title: `Add Website: ${type}${w.url}`, content: null });
+  //     }
+  //   }
 
-    // Create all subitems
-    for (const { title, content } of subitems) {
-      const subitemColumnValues = content
-        ? { [process.env.MONDAY_SUBITEM_COL_CONTENT]: { text: content } }
-        : {};
-      await createSubitem(item.id, title, subitemColumnValues);
-    }
+  //   // Headshot
+  //   subitems.push({
+  //     title: headshotConfirmed
+  //       ? `Headshot: confirmed uploaded — retrieve from shared folder labeled "${fullName}"`
+  //       : `Headshot: not yet uploaded — follow up with submitter, label file "${fullName}"`,
+  //     content: headshotConfirmed ? GOOGLE_FOLDER_URL : null,
+  //   });
 
-    return res.status(200).json({ success: true, itemId: item.id });
-  } catch (err) {
-    if (err.code === 'VPN_REQUIRED') {
-      return res.status(503).json({ code: 'VPN_REQUIRED', message: err.message });
-    }
-    console.error('POST /api/people error:', err);
-    return res.status(500).json({ message: 'Failed to create Monday item.' });
-  }
+  //   // Create all subitems
+  //   for (const { title, content } of subitems) {
+  //     const subitemColumnValues = content
+  //       ? { [process.env.MONDAY_SUBITEM_COL_CONTENT]: { text: content } }
+  //       : {};
+  //     await createSubitem(item.id, title, subitemColumnValues);
+  //   }
+
+  //   return res.status(200).json({ success: true, itemId: item.id });
+  // } catch (err) {
+  //   if (err.code === 'VPN_REQUIRED') {
+  //     return res.status(503).json({ code: 'VPN_REQUIRED', message: err.message });
+  //   }
+  //   console.error('POST /api/people error:', err);
+  //   return res.status(500).json({ message: 'Failed to create Monday item.' });
+  // }
 });
 
 // ── POST /api/people/update ───────────────────────────────────────────────────
