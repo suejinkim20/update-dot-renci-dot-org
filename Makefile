@@ -34,6 +34,14 @@ endif
 # Read current version from Chart.yaml (single source of truth)
 CURRENT_VERSION := $(shell grep '^appVersion:' $(HELM_CHART)/Chart.yaml | awk '{print $$2}' | tr -d '"')
 
+# Detect host architecture and set platform flag for cross-compilation
+ARCH := $(shell uname -m)
+ifeq ($(ARCH), arm64)
+  PLATFORM_FLAG := --platform linux/amd64
+else
+  PLATFORM_FLAG :=
+endif
+
 # =============================================================================
 # ✅ CHECKS
 # =============================================================================
@@ -82,10 +90,16 @@ endif
 
 build: ## 🛠️  Build frontend and backend images
 	@echo "🧱 Building images at version $(CURRENT_VERSION) (arch: $(ARCH))"
-	docker buildx build $(PLATFORM_FLAG) -f frontend/Dockerfile -t $(FRONTEND_IMG):$(CURRENT_VERSION) .
-	docker buildx build $(PLATFORM_FLAG) -f backend/Dockerfile  -t $(BACKEND_IMG):$(CURRENT_VERSION)  .
+	@echo "🔍 VITE_AD_CLIENT_ID=$(VITE_AD_CLIENT_ID)"
+	@echo "🔍 VITE_AD_AUTHORITY=$(VITE_AD_AUTHORITY)"
+	docker buildx build $(PLATFORM_FLAG) \
+		--build-arg VITE_AD_CLIENT_ID=$(VITE_AD_CLIENT_ID) \
+		--build-arg VITE_AD_AUTHORITY=$(VITE_AD_AUTHORITY) \
+		-f frontend/Dockerfile -t $(FRONTEND_IMG):$(CURRENT_VERSION) .
+	docker buildx build $(PLATFORM_FLAG) \
+		-f backend/Dockerfile -t $(BACKEND_IMG):$(CURRENT_VERSION) .
 	@echo "✅ Images built"
-
+	
 run: ## ▶️  Start backend then frontend containers
 	@echo "🚀 Starting backend"
 	docker run --rm -d \
