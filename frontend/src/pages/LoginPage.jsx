@@ -1,17 +1,9 @@
 // frontend/src/pages/LoginPage.jsx
 
-import { Box, Button, Text, Stack, Divider, Container } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Box, Button, Text, Stack, Divider, Container, Anchor } from '@mantine/core';import { useAuth } from '../context/AuthContext';
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const navigate = useNavigate();
-
-  function handleLogin() {
-    login();
-    navigate('/');
-  }
 
   return (
     <Box
@@ -94,7 +86,7 @@ export default function LoginPage() {
             <Button
               fullWidth
               size="sm"
-              onClick={handleLogin}
+              onClick={login}
               style={{ background: '#005b8e' }}
             >
               Sign in with your organization account
