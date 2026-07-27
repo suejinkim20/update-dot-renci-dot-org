@@ -60,19 +60,22 @@ const GROUP_ACRONYMS = {
 };
 
 function buildGroupOptions(groups, excludeSlug = null) {
-  const toOption = (g, groupLabel) => ({
+  const toOption = (g) => ({
     value: g.slug,
     label: GROUP_ACRONYMS[g.slug] ? `${g.name} (${GROUP_ACRONYMS[g.slug]})` : g.name,
-    group: groupLabel,
   });
+
   const research = (groups?.researchGroups || [])
     .filter((g) => g.slug !== excludeSlug)
-    .map((g) => toOption(g, 'Research Groups'));
+    .map(toOption);
+
   const ops = (groups?.operationsGroups || [])
     .filter((g) => g.slug !== excludeSlug)
-    .map((g) => toOption(g, 'Operations Groups'));
+    .map(toOption);
+
   return [...research, ...ops];
 }
+
 
 function EditContributors({ currentItems = [], allItems = [], value, onChange }) {
   const addValue    = value?.add    ?? [];
@@ -219,7 +222,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedProject, people, o
 export default function UpdateProjectForm() {
   const navigate = useNavigate();
   const { projects, loading: projectsLoading, error: projectsError } = useProjects();
-  const { groups } = useGroups();
+  const { researchGroups, operationsGroups, loading: groupsLoading } = useGroups();
   const { people } = usePeople();
   const { organizations } = useOrganizations();
 
@@ -234,6 +237,8 @@ export default function UpdateProjectForm() {
   });
 
   const { fields: changeFields, append, remove } = useFieldArray({ control, name: 'changes' });
+
+  const groups = { researchGroups, operationsGroups };
 
   const handleProjectSelect = (project) => {
     setSelectedProject(project);
