@@ -44,6 +44,7 @@ const FIELD_OPTIONS = [
   { value: 'name',          label: 'Update Name' },
   { value: 'jobTitle',      label: 'Update Job Title' },
   { value: 'bio',           label: 'Add/Update Bio' },
+  { value: 'orcid',         label: 'Update ORCID iD' },
   { value: 'renciScholar',  label: 'Update RENCI Scholar Status' },
   { value: 'groups',        label: 'Edit Groups' },
   { value: 'projects',      label: 'Edit Projects' },
@@ -267,6 +268,29 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
               <RichTextInput
                 {...field}
                 label="New Bio"
+                required
+                error={fieldState.error?.message}
+              />
+            )}
+          />
+        </Stack>
+      );
+
+    case 'orcid':
+      return (
+        <Stack gap="xs">
+          {selectedPerson?.orcid && (
+            <ReadOnlyField label="Current ORCID iD" value={selectedPerson.orcid} />
+          )}
+          <Controller
+            name={`changes.${index}.value`}
+            control={control}
+            rules={{ required: 'New ORCID iD is required.' }}
+            render={({ field, fieldState }) => (
+              <TextInput
+                {...field}
+                label="New ORCID iD"
+                placeholder="0000-0002-1825-0097"
                 required
                 error={fieldState.error?.message}
               />
@@ -622,6 +646,7 @@ export default function UpdatePersonForm() {
         { label: 'RENCI Scholar Bio', value: selectedPerson.renciScholarBio, isHtml: true },
         { label: 'Projects',          value: selectedPerson.projects,  isList: true },
         { label: 'Bio',               value: selectedPerson.bio,       isHtml: true },
+        { label: 'ORCID iD',          value: selectedPerson.orcid },
         { label: 'Websites',          value: selectedPerson.websites,  isWebsites: true },
         { label: 'Publications',      value: selectedPerson.publications, isPublications: true },
       ]

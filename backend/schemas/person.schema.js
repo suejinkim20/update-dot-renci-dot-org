@@ -70,6 +70,11 @@ export const personSchemas = {
         required: false,
         label: 'Biography',
       },
+      orcid: {
+        type: 'string',
+        required: false,
+        label: 'ORCID iD',
+      },
       websites: {
         type: 'array',
         required: false,

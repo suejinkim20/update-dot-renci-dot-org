@@ -60,6 +60,7 @@ export default function AddPersonForm() {
       renciScholarBio: '',
       projects: [],
       bio: '',
+      orcid: '',
       websites: [],
       headshotConfirmed: false,
     },
@@ -315,6 +316,20 @@ export default function AddPersonForm() {
                 {...field}
                 label="Biography"
                 error={errors.bio?.message}
+              />
+            )}
+          />
+
+          <Controller
+            name="orcid"
+            control={control}
+            render={({ field }) => (
+              <TextInput
+                {...field}
+                label="ORCID iD"
+                placeholder="0000-0002-1825-0097"
+                helperText="Optional. Enter the ORCID identifier for this person."
+                error={errors.orcid?.message}
               />
             )}
           />
