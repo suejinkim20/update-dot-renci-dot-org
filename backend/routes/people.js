@@ -8,7 +8,7 @@ import { createItem, createSubitem } from '../services/monday.js';
 const router = express.Router();
 
 const TRUNCATE_LENGTH = 300;
-const GOOGLE_FOLDER_URL = 'https://drive.google.com/placeholder-folder-link';
+const GOOGLE_FOLDER_URL = 'https://drive.google.com/drive/folders/1O2mYei1Wh_sGRC9Ro7Gz_9kVY5mUn6W1';
 
 // Truncate long text for the Description column.
 // Full text goes in the subitem content column for web team reference.
@@ -66,6 +66,7 @@ router.post('/', async (req, res) => {
     renciScholarBio,
     projects,
     bio,
+    orcid,
     websites,
     headshotConfirmed,
   } = req.body;
@@ -112,11 +113,14 @@ router.post('/', async (req, res) => {
 
     const websiteLines  = formatWebsites(websites);
     const projectList   = formatList(projects);
-    if (projectList !== 'None provided' || websiteLines !== 'None provided') {
+    if (projectList !== 'None provided' || websiteLines !== 'None provided' || orcid) {
       descriptionLines.push('');
       descriptionLines.push('CONNECTIONS');
       if (projectList !== 'None provided') {
         descriptionLines.push(`Projects: ${projectList}`);
+      }
+      if (orcid) {
+        descriptionLines.push(`ORCID iD: ${orcid}`);
       }
       if (websiteLines !== 'None provided') {
         descriptionLines.push(`Websites:\n${websiteLines}`);
@@ -177,6 +181,11 @@ router.post('/', async (req, res) => {
         title: 'RENCI Scholar: Yes',
         content: renciScholarBio || null,
       });
+    }
+
+    // ORCID
+    if (orcid) {
+      subitems.push({ title: `ORCID iD: ${orcid}`, content: null });
     }
 
     // Projects
