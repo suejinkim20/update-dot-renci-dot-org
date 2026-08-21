@@ -30,7 +30,7 @@ export default function AddPersonPage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    document.title = 'Add Person — RENCI Website Change Requests';
+    document.title = 'Add Person — RENCI Website Update Form';
   }, []);
 
   const { reset, watch, control, handleSubmit, formState } = useForm({

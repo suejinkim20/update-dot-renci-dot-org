@@ -21,7 +21,7 @@ export default function ArchiveProjectPage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    document.title = 'Archive Project — RENCI Website Change Requests';
+    document.title = 'Archive Project — RENCI Website Update Form';
   }, []);
 
   const { reset, watch, control, handleSubmit, formState } = useForm({

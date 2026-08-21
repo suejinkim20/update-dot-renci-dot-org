@@ -29,7 +29,7 @@ export default function AddProjectPage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    document.title = 'Add Project — RENCI Website Change Requests';
+    document.title = 'Add Project — RENCI Website Update Form';
   }, []);
 
   const { reset, watch, control, handleSubmit, formState } = useForm({

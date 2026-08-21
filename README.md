@@ -1,4 +1,4 @@
-# RENCI Website Change Requests
+# RENCI Website Update Form
 
 An internal tool for RENCI staff to submit website change requests for projects and people. Requests are tracked as tickets on a Monday.com board and reviewed by the web team before any changes go live.
 

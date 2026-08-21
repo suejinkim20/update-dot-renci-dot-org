@@ -21,7 +21,7 @@ export default function UpdatePersonPage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    document.title = 'Update Person — RENCI Website Change Requests';
+    document.title = 'Update Person — RENCI Website Update Form';
   }, []);
 
   const { reset, watch, control, handleSubmit, setValue, formState } = useForm({

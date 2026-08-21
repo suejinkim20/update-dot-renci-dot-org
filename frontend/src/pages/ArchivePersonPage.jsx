@@ -23,7 +23,7 @@ export default function ArchivePersonPage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    document.title = 'Archive Person — RENCI Website Change Requests';
+    document.title = 'Archive Person — RENCI Website Update Form';
   }, []);
 
   const { reset, watch, control, handleSubmit, formState } = useForm({
