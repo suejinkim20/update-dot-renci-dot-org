@@ -69,9 +69,15 @@ function normalizeIds(obj) {
   return result;
 }
 
+function normalizeActiveFlag(value) {
+  if (value === true || value === 1 || value === '1') return true;
+  if (value === false || value === 0 || value === '0') return false;
+  return null;
+}
+
 export async function getPeople() {
   // Fields confirmed available in the API as of RN-201.
-  // Not yet in API (add when confirmed): active, job_title, start_date,
+  // Not yet in API (add when confirmed): active, start_date,
   // chief_scientist, chief_scientist_bio.
   const query = `
     query AllPeople($page: PaginationInput) {
@@ -80,6 +86,8 @@ export async function getPeople() {
         post_id
         slug
         sorting_name
+        job_title
+        orcid
         biography
         urls
         projects { name post_id slug }
@@ -122,8 +130,8 @@ export async function getPeople() {
  * consistent with how EditableWebsiteList and formatWebsites handle entries.
  * sorting_name: kept as-is; informational only, not a form field.
  *
- * Not yet in API (defaulted to null/false until available):
- *   active, jobTitle, startDate, renciScholar, renciScholarBio
+ * Not yet in API (left undefined until available):
+ *   active, startDate, renciScholar, renciScholarBio
  *
  * groups: merged flat list of research + operations groups, each tagged with
  * a `type` field for grouped MultiSelect display in the Update Person form.
@@ -132,7 +140,7 @@ export async function getPeople() {
  * Staff can submit publication additions via Update Person form (DOI-based).
  * citation is intentionally excluded — too long for form display.
  */
-function normalizePerson(raw) {
+export function normalizePerson(raw) {
   const p = normalizeIds(raw);
 
   const researchGroups = (p.research_groups || []).map(normalizeIds);
@@ -143,16 +151,17 @@ function normalizePerson(raw) {
     name: p.name,
     slug: p.slug,
     sortingName: p.sorting_name ?? null,
+    orcid: p.orcid ?? null,
     bio: p.biography ?? null,
     // urls is a flat string array from the API — normalize to { url } objects only.
     websites: (p.urls || []).map((url) => ({ url })),
 
     // Not yet in API
-    active: null,
-    jobTitle: null,
-    startDate: null,
-    renciScholar: false,
-    renciScholarBio: null,
+    active: undefined,
+    jobTitle: p.job_title ?? null,
+    startDate: undefined,
+    renciScholar: undefined,
+    renciScholarBio: undefined,
 
     projects: (p.projects || []).map(normalizeIds),
     researchGroups,
@@ -225,7 +234,7 @@ export async function getProjects() {
  * CurrentDataModal. Not yet a form field.
  * urls: flat string array, normalized to { url } objects — same pattern as people.
  */
-function normalizeProject(raw) {
+export function normalizeProject(raw) {
   const p = normalizeIds(raw);
 
   const researchGroups = (p.research_groups || []).map(normalizeIds);
@@ -236,7 +245,7 @@ function normalizeProject(raw) {
     id: p.id,
     name: p.name,
     slug: p.slug,
-    active: p.active ?? null,
+    active: normalizeActiveFlag(p.active),
 
     description: p.description ?? null,
     // API field is `additional_description` — surfaced in CurrentDataModal only, not a form field.
