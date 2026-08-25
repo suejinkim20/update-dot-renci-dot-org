@@ -301,7 +301,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedPerson }) {
     case 'renciScholar':
       return (
         <Stack gap="sm">
-          {selectedPerson?.renciScholar !== undefined && (
+          {typeof selectedPerson?.renciScholar === 'boolean' && (
             <ReadOnlyField
               label="Current Status"
               value={selectedPerson.renciScholar ? 'RENCI Scholar: Yes' : 'RENCI Scholar: No'}
@@ -635,18 +635,51 @@ export default function UpdatePersonForm() {
   // TODO: Modal is getting long — consider tabbed layout post-launch.
   const modalFields = selectedPerson
     ? [
-        { label: 'Name',              value: selectedPerson.name },
-        { label: 'Slug',              value: selectedPerson.slug },
-        { label: 'Active',            value: selectedPerson.active === true ? 'Yes' : selectedPerson.active === false ? 'No' : null },
-        { label: 'Job Title',         value: selectedPerson.jobTitle },
-        { label: 'Groups',            value: selectedPerson.groups,    isList: true },
-        { label: 'RENCI Scholar',     value: selectedPerson.renciScholar ? 'Yes' : 'No' },
-        { label: 'RENCI Scholar Bio', value: selectedPerson.renciScholarBio, isHtml: true },
-        { label: 'Projects',          value: selectedPerson.projects,  isList: true },
-        { label: 'Bio',               value: selectedPerson.bio,       isHtml: true },
-        { label: 'ORCID iD',          value: selectedPerson.orcid },
-        { label: 'Websites',          value: selectedPerson.websites,  isWebsites: true },
-        { label: 'Publications',      value: selectedPerson.publications, isPublications: true },
+        { label: 'Name',              value: selectedPerson.name, section: 'Overview' },
+        { label: 'Slug',              value: selectedPerson.slug, section: 'Overview' },
+        { label: 'Active',            value: selectedPerson.active === true ? 'Active' : selectedPerson.active === false ? 'Inactive' : undefined, section: 'Overview' },
+        { label: 'Job Title',         value: selectedPerson.jobTitle, section: 'Overview' },
+        { label: 'ORCID iD',          value: selectedPerson.orcid, section: 'Overview' },
+        { label: 'Groups',            value: selectedPerson.groups, isList: true, section: 'Relationships' },
+        {
+          label: 'RENCI Scholar',
+          value:
+            selectedPerson.renciScholar === true
+              ? 'Yes'
+              : selectedPerson.renciScholar === false
+                ? 'No'
+                : undefined,
+          section: 'Overview',
+        },
+        {
+          label: 'RENCI Scholar Bio',
+          value: selectedPerson.renciScholarBio,
+          isHtml: true,
+          section: 'Content',
+          collapse: { maxHeight: 160, minChars: 280 },
+        },
+        {
+          label: 'Projects',
+          value: selectedPerson.projects,
+          isList: true,
+          section: 'Relationships',
+          collapse: { previewItems: 3, itemLabel: 'projects' },
+        },
+        {
+          label: 'Bio',
+          value: selectedPerson.bio,
+          isHtml: true,
+          section: 'Content',
+          collapse: { maxHeight: 100, minChars: 280 },
+        },
+        { label: 'Websites',          value: selectedPerson.websites, isWebsites: true, section: 'Links' },
+        {
+          label: 'Publications',
+          value: selectedPerson.publications,
+          isPublications: true,
+          section: 'Publications',
+          collapse: { previewItems: 2, itemLabel: 'publications' },
+        },
       ]
     : [];
 

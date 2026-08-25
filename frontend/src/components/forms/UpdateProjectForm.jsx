@@ -344,17 +344,45 @@ export default function UpdateProjectForm() {
   
   const modalFields = selectedProject
     ? [
-        { label: 'Name',                   value: selectedProject.name },
-        { label: 'Slug',                   value: selectedProject.slug },
-        { label: 'Active',                 value: selectedProject.active === true ? 'Yes' : selectedProject.active === false ? 'No' : null },
-        { label: 'Description',            value: selectedProject.description,           isHtml: true },
-        { label: 'Additional Description', value: selectedProject.additionalDescription, isHtml: true },
-        { label: "RENCI's Role",           value: selectedProject.renciRole,             isHtml: true },
-        { label: 'Owning Group',           value: selectedProject.owningGroup?.label ?? selectedProject.owningGroup?.name },
-        { label: 'Contributors',           value: selectedProject.people,                isList: true },
-        { label: 'Funding Organizations',  value: selectedProject.fundingOrgs,           isList: true },
-        { label: 'Partner Organizations',  value: selectedProject.partnerOrgs,           isList: true },
-        { label: 'Websites',               value: selectedProject.websites,              isWebsites: true },
+        { label: 'Name', value: selectedProject.name, section: 'Overview' },
+        { label: 'Slug', value: selectedProject.slug, section: 'Overview' },
+        {
+          label: 'Active',
+          value: selectedProject.active === true ? 'Active' : selectedProject.active === false ? 'Inactive' : null,
+          section: 'Overview',
+        },
+        {
+          label: 'Description',
+          value: selectedProject.description,
+          isHtml: true,
+          section: 'Content',
+          collapse: { maxHeight: 100, minChars: 280 },
+        },
+        {
+          label: 'Additional Description',
+          value: selectedProject.additionalDescription,
+          isHtml: true,
+          section: 'Content',
+          collapse: { maxHeight: 80, minChars: 280 },
+        },
+        {
+          label: "RENCI's Role",
+          value: selectedProject.renciRole,
+          isHtml: true,
+          section: 'Content',
+          collapse: { maxHeight: 80, minChars: 280 },
+        },
+        { label: 'Owning Group', value: selectedProject.owningGroup?.label ?? selectedProject.owningGroup?.name, section: 'Overview' },
+        {
+          label: 'Contributors',
+          value: selectedProject.people,
+          isList: true,
+          section: 'Related Content',
+          collapse: { previewItems: 5, itemLabel: 'contributors' },
+        },
+        { label: 'Funding Organizations', value: selectedProject.fundingOrgs, isList: true, section: 'Related Content' },
+        { label: 'Partner Organizations', value: selectedProject.partnerOrgs, isList: true, section: 'Related Content' },
+        { label: 'Websites', value: selectedProject.websites, isWebsites: true, section: 'Links' },
       ]
     : [];
 
