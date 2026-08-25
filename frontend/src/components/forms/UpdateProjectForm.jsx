@@ -25,7 +25,6 @@ import {
   TagsInput,
   ReadOnlyField,
 } from '../form-elements';
-import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import SlugConfirmation from '../form-blocks/SlugConfirmation';
 import FormSuccessState from '../form-blocks/FormSuccessState';
 import CurrentDataModal from '../form-blocks/CurrentDataModal';
@@ -60,19 +59,22 @@ const GROUP_ACRONYMS = {
 };
 
 function buildGroupOptions(groups, excludeSlug = null) {
-  const toOption = (g, groupLabel) => ({
+  const toOption = (g) => ({
     value: g.slug,
     label: GROUP_ACRONYMS[g.slug] ? `${g.name} (${GROUP_ACRONYMS[g.slug]})` : g.name,
-    group: groupLabel,
   });
+
   const research = (groups?.researchGroups || [])
     .filter((g) => g.slug !== excludeSlug)
-    .map((g) => toOption(g, 'Research Groups'));
+    .map(toOption);
+
   const ops = (groups?.operationsGroups || [])
     .filter((g) => g.slug !== excludeSlug)
-    .map((g) => toOption(g, 'Operations Groups'));
+    .map(toOption);
+
   return [...research, ...ops];
 }
+
 
 function EditContributors({ currentItems = [], allItems = [], value, onChange }) {
   const addValue    = value?.add    ?? [];
@@ -219,7 +221,7 @@ function ChangeBlockInput({ fieldKey, control, index, selectedProject, people, o
 export default function UpdateProjectForm() {
   const navigate = useNavigate();
   const { projects, loading: projectsLoading, error: projectsError } = useProjects();
-  const { groups } = useGroups();
+  const { researchGroups, operationsGroups, loading: groupsLoading } = useGroups();
   const { people } = usePeople();
   const { organizations } = useOrganizations();
 
@@ -229,11 +231,13 @@ export default function UpdateProjectForm() {
   const [fieldSelections, setFieldSelections] = useState({});
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const { control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm({
-    defaultValues: { submitterEmail: '', slug: '', changes: [] },
+  const { control, handleSubmit, reset, setValue, formState: { isSubmitting } } = useForm({
+    defaultValues: { slug: '', changes: [] },
   });
 
   const { fields: changeFields, append, remove } = useFieldArray({ control, name: 'changes' });
+
+  const groups = { researchGroups, operationsGroups };
 
   const handleProjectSelect = (project) => {
     setSelectedProject(project);
@@ -308,7 +312,6 @@ export default function UpdateProjectForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          submitterEmail: data.submitterEmail,
           slug:           data.slug,
           name:           selectedProject?.name || null,
           changes,
@@ -440,7 +443,6 @@ export default function UpdateProjectForm() {
 
             <Divider />
 
-            <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
             <Button type="submit" loading={isSubmitting} fullWidth>
               Submit Update Request
             </Button>

@@ -11,7 +11,6 @@ import { useDraft } from '../hooks/useDraft';
 const FORM_KEY = 'archive:project';
 
 const DEFAULT_VALUES = {
-  submitterEmail: '',
   project: null,
   reason: '',
 };

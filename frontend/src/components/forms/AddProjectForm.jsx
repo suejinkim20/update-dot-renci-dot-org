@@ -19,7 +19,6 @@ import TextInput from '../form-elements/TextInput';
 import RichTextInput from '../form-elements/RichTextInput';
 import TagsInput from '../form-elements/TagsInput';
 import EditableWebsiteList from '../form-blocks/EditableWebsiteList';
-import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import FormSuccessState from '../form-blocks/FormSuccessState';
 import FormIntro from '../form-blocks/FormIntro';
 import OrganizationSelector from '../form-blocks/OrganizationSelector';
@@ -71,7 +70,6 @@ export default function AddProjectForm() {
     reset,
   } = useForm({
     defaultValues: {
-      submitterEmail: '',
       name: '',
       slug: '',
       description: '',
@@ -301,8 +299,6 @@ export default function AddProjectForm() {
           />
 
           <Divider />
-
-          <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
 
           <Group justify="flex-end">
             <Button type="submit" loading={submitting} disabled={submitting}>

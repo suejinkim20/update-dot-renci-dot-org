@@ -15,6 +15,7 @@ Staff can submit requests to:
 |---|---|
 | Frontend | Vite + React, Mantine, React Hook Form |
 | Backend | Node.js + Express |
+| Auth | Backend-managed OIDC session |
 | Ticket tracking | Monday.com |
 | Data | GraphQL intermediate API over WordPress |
 
@@ -32,15 +33,18 @@ Staff can submit requests to:
 # Install dependencies
 npm install
 
-# Copy environment variables
-cp .env.example .env
-# Fill in the required values in .env
+# Create separate env files once
+cp .env.local.example .env.local
+cp .env.production.example .env.production
+# Fill in the required values in each file
 
-# Start both frontend and backend
+# Start both frontend and backend with local settings
 npm run dev
 ```
 
 The app will be available at [http://localhost:5173](http://localhost:5173).
+
+`Makefile` commands default to `.env.local` for local work. `make deploy` automatically reads from `.env.production`, so you do not need to swap `PUBLIC_BASE_URL` back and forth.
 
 ### Deployment
 
@@ -70,6 +74,8 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for instructions on building and running th
 ## Environment variables
 
 Copy `.env.example` to `.env` and fill in the required values. See `.env.example` for descriptions of each variable.
+
+Authentication is handled by the Express backend. The browser talks only to this app's own `/auth/*` and `/api/*` routes; the backend performs the OIDC flow with the identity provider and issues an `HttpOnly` session cookie.
 
 ## VPN requirement
 

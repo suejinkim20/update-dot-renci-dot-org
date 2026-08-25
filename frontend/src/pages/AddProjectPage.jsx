@@ -12,7 +12,6 @@ import { useState } from 'react';
 const FORM_KEY = 'add:project';
 
 const DEFAULT_VALUES = {
-  submitterEmail: '',
   name: '',
   slug: '',
   description: '',

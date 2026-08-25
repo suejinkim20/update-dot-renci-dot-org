@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import { Stack, Text, Button, Alert, Box, Paper } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { AutocompleteField, LongTextInput } from '../form-elements';
-import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import SlugConfirmation from '../form-blocks/SlugConfirmation';
 import ArchiveConfirmation from '../form-blocks/ArchiveConfirmation';
 import FormSuccessState from '../form-blocks/FormSuccessState';
@@ -27,7 +26,6 @@ export default function ArchivePersonForm() {
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
-      submitterEmail: '',
       person: null,
       effectiveDate: null,
       reason: '',
@@ -43,7 +41,6 @@ export default function ArchivePersonForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          submitterEmail: data.submitterEmail,
           slug:          data.person?.slug,
           name:          data.person?.name,
           effectiveDate: data.effectiveDate
@@ -162,8 +159,6 @@ export default function ArchivePersonForm() {
             any changes.
           </Text>
         </Paper>
-
-        <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
 
         <Box style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button type="submit" color="orange">Review &amp; confirm</Button>

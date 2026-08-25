@@ -83,7 +83,7 @@ docker images | grep renci-update
 
 ### Notes
 
-- Nginx proxies `/api/` requests to the backend via `localhost:3001` — this works
+- Nginx proxies `/api/` and `/auth/` requests to the backend via `localhost:3001` — this works
   because both containers share the same network namespace.
 - The backend must be running before the frontend container starts.
 - `--network host` is not used — it does not work on macOS with Docker Desktop.
@@ -132,6 +132,12 @@ helm upgrade --install renci-update ./helm \
   -n <namespace> \
   --set secrets.GRAPHQL_ENDPOINT=xxx \
   --set secrets.GRAPHQL_AUTH_HEADER=xxx \
+  --set secrets.AD_AUTHORITY=xxx \
+  --set secrets.AD_CLIENT_ID=xxx \
+  --set secrets.AD_CLIENT_SECRET=xxx \
+  --set secrets.AD_SCOPE='openid profile email' \
+  --set secrets.PUBLIC_BASE_URL=https://update.apps.renci.org \
+  --set secrets.SESSION_SECRET=xxx \
   --set secrets.MONDAY_API_KEY=xxx \
   --set secrets.MONDAY_BOARD_ID=xxx \
   --set secrets.MONDAY_COL_STATUS=xxx \
@@ -149,6 +155,8 @@ helm upgrade --install renci-update ./helm \
 
 Fill in values from your `.env` file. Never commit secret values to `values.yaml` or
 any tracked file.
+
+The ingress or frontend proxy must forward both `/api/*` and `/auth/*` to the backend so the browser stays on a single origin for app traffic and sign-in. Set `PUBLIC_BASE_URL` to the externally visible app origin so the backend generates the exact callback URL registered in ADFS.
 
 ### 4. Verify the deployment
 

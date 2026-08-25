@@ -11,59 +11,59 @@ function test(label, result, expectValid) {
 }
 
 // --- project.add ---
-test('project.add: valid (email only)',
-  validate('project.add', { submitterEmail: 'a@b.com' }), true);
+test('project.add: valid empty payload',
+  validate('project.add', {}), true);
 
-test('project.add: missing email',
-  validate('project.add', {}), false);
+test('project.add: valid with name',
+  validate('project.add', { name: 'My Project' }), true);
 
 // --- project.update ---
 test('project.update: valid',
-  validate('project.update', { submitterEmail: 'a@b.com', slug: 'my-project', changes: [{ field: 'name', value: 'New Name' }] }), true);
+  validate('project.update', { slug: 'my-project', changes: [{ field: 'name', value: 'New Name' }] }), true);
 
 test('project.update: missing slug',
-  validate('project.update', { submitterEmail: 'a@b.com', changes: [{}] }), false);
+  validate('project.update', { changes: [{}] }), false);
 
 test('project.update: empty changes array',
-  validate('project.update', { submitterEmail: 'a@b.com', slug: 'my-project', changes: [] }), false);
+  validate('project.update', { slug: 'my-project', changes: [] }), false);
 
 // --- project.archive ---
 test('project.archive: valid',
-  validate('project.archive', { submitterEmail: 'a@b.com', slug: 'my-project' }), true);
+  validate('project.archive', { slug: 'my-project', reason: 'No longer active.' }), true);
 
 // --- person.add ---
 test('person.add: valid (all required fields)',
   validate('person.add', {
-    submitterEmail: 'a@b.com', firstName: 'Jane', lastName: 'Smith',
+    firstName: 'Jane', lastName: 'Smith',
     jobTitle: 'Engineer', groups: ['research-group'], startDate: '2026-03-01'
   }), true);
 
 test('person.add: missing firstName',
   validate('person.add', {
-    submitterEmail: 'a@b.com', lastName: 'Smith',
+    lastName: 'Smith',
     jobTitle: 'Engineer', groups: ['research-group'], startDate: '2026-03-01'
   }), false);
 
 test('person.add: renciScholar true but no bio',
   validate('person.add', {
-    submitterEmail: 'a@b.com', firstName: 'Jane', lastName: 'Smith',
+    firstName: 'Jane', lastName: 'Smith',
     jobTitle: 'Engineer', groups: ['research-group'], startDate: '2026-03-01',
     renciScholar: true
   }), false);
 
 test('person.add: renciScholar true with bio',
   validate('person.add', {
-    submitterEmail: 'a@b.com', firstName: 'Jane', lastName: 'Smith',
+    firstName: 'Jane', lastName: 'Smith',
     jobTitle: 'Engineer', groups: ['research-group'], startDate: '2026-03-01',
     renciScholar: true, renciScholarBio: 'She does research.'
   }), true);
 
 // --- person.archive ---
 test('person.archive: valid',
-  validate('person.archive', { submitterEmail: 'a@b.com', slug: 'jane-smith', effectiveDate: '2026-03-17' }), true);
+  validate('person.archive', { slug: 'jane-smith', effectiveDate: '2026-03-17', reason: 'Left RENCI.' }), true);
 
 test('person.archive: missing effectiveDate',
-  validate('person.archive', { submitterEmail: 'a@b.com', slug: 'jane-smith' }), false);
+  validate('person.archive', { slug: 'jane-smith', reason: 'Left RENCI.' }), false);
 
 // --- unknown operation ---
 test('unknown operation returns error',

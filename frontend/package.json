@@ -30,6 +30,6 @@
     "vitest": "^4.1.4"
   },
   "optionalDependencies": {
-    "@esbuild/darwin-arm64": "^0.28.0"
+    "@esbuild/darwin-arm64": "^0.21.5"
   }
 }

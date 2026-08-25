@@ -11,7 +11,6 @@ import { useDraft } from '../hooks/useDraft';
 const FORM_KEY = 'add:person';
 
 const DEFAULT_VALUES = {
-  submitterEmail: '',
   firstName: '',
   lastName: '',
   preferredName: '',

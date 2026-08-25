@@ -8,6 +8,7 @@ COPY frontend/package*.json ./frontend/
 RUN npm ci --workspace=frontend
 
 COPY frontend/ frontend/
+
 RUN npm run build --workspace=frontend
 
 # run
