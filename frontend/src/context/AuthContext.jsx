@@ -1,7 +1,6 @@
 // frontend/src/context/AuthContext.jsx
 
-import { createContext, useContext, useMemo } from 'react';
-import { useAuth as useOidcAuth } from 'react-oidc-context';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const AuthContext = createContext(null);
 
@@ -13,30 +12,68 @@ function getInitials(name) {
 }
 
 export function AuthStateProvider({ children }) {
-  const oidc = useOidcAuth();
+  const [sessionUser, setSessionUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const user = useMemo(() => {
-    if (!oidc.user) return null;
-    const profile = oidc.user.profile;
-    const user = {
-      name: profile.name ?? profile.email,
-      email: profile.email,
-      initials: getInitials(profile.name ?? profile.email),
-    };
-    console.log('[Auth] Signed in:', { name: user.name, email: user.email, initials: user.initials });
-    return user;
-  }, [oidc.user]);
+  async function refreshSession() {
+    setIsLoading(true);
 
-  function login() {
-    oidc.signinRedirect();
+    try {
+      const res = await fetch('/api/session');
+
+      if (res.status === 401) {
+        setSessionUser(null);
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(`Failed to load session (${res.status})`);
+      }
+
+      const body = await res.json();
+      setSessionUser(body.user ?? null);
+    } catch (err) {
+      console.error('[Auth] Session load failed:', err);
+      setSessionUser(null);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  function logout() {
-    oidc.removeUser();
+  useEffect(() => {
+    refreshSession();
+  }, []);
+
+  const user = useMemo(() => {
+    if (!sessionUser) return null;
+
+    return {
+      name: sessionUser.name ?? sessionUser.email,
+      email: sessionUser.email,
+      initials: getInitials(sessionUser.name ?? sessionUser.email),
+    };
+  }, [sessionUser]);
+
+  function login(returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`) {
+    const params = new URLSearchParams();
+    if (returnTo) params.set('returnTo', returnTo);
+    window.location.assign(`/auth/login${params.size ? `?${params.toString()}` : ''}`);
+  }
+
+  async function logout() {
+    try {
+      await fetch('/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.error('[Auth] Logout failed:', err);
+    } finally {
+      setSessionUser(null);
+    }
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!oidc.user, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, isAuthenticated: !!user, isLoading, login, logout, refreshSession }}
+    >
       {children}
     </AuthContext.Provider>
   );

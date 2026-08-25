@@ -11,7 +11,6 @@ import { useDraft } from '../hooks/useDraft';
 const FORM_KEY = 'update:person';
 
 const DEFAULT_VALUES = {
-  submitterEmail: '',
   slug: '',
   changes: [],
 };

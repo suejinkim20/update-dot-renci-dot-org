@@ -25,7 +25,6 @@ import {
   TagsInput,
   ReadOnlyField,
 } from '../form-elements';
-import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import SlugConfirmation from '../form-blocks/SlugConfirmation';
 import FormSuccessState from '../form-blocks/FormSuccessState';
 import CurrentDataModal from '../form-blocks/CurrentDataModal';
@@ -232,8 +231,8 @@ export default function UpdateProjectForm() {
   const [fieldSelections, setFieldSelections] = useState({});
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const { control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm({
-    defaultValues: { submitterEmail: '', slug: '', changes: [] },
+  const { control, handleSubmit, reset, setValue, formState: { isSubmitting } } = useForm({
+    defaultValues: { slug: '', changes: [] },
   });
 
   const { fields: changeFields, append, remove } = useFieldArray({ control, name: 'changes' });
@@ -313,7 +312,6 @@ export default function UpdateProjectForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          submitterEmail: data.submitterEmail,
           slug:           data.slug,
           name:           selectedProject?.name || null,
           changes,
@@ -445,7 +443,6 @@ export default function UpdateProjectForm() {
 
             <Divider />
 
-            <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
             <Button type="submit" loading={isSubmitting} fullWidth>
               Submit Update Request
             </Button>

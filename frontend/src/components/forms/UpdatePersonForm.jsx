@@ -29,7 +29,6 @@ import {
   TagsInput,
   ReadOnlyField,
 } from '../form-elements';
-import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import SlugConfirmation from '../form-blocks/SlugConfirmation';
 import FormSuccessState from '../form-blocks/FormSuccessState';
 import CurrentDataModal from '../form-blocks/CurrentDataModal';
@@ -530,9 +529,9 @@ export default function UpdatePersonForm() {
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm({
-    defaultValues: { submitterEmail: '', slug: '', changes: [] },
+    defaultValues: { slug: '', changes: [] },
   });
 
   const { fields: changeFields, append, remove } = useFieldArray({
@@ -604,7 +603,6 @@ export default function UpdatePersonForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          submitterEmail: data.submitterEmail,
           slug:           data.slug,
           name:           selectedPerson?.name || null,
           changes,
@@ -759,7 +757,6 @@ export default function UpdatePersonForm() {
 
             <Divider />
 
-            <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
             <Button type="submit" loading={isSubmitting} fullWidth>
               Submit Update Request
             </Button>

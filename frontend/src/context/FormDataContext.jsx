@@ -9,6 +9,7 @@ const VPN_ERROR_MESSAGE =
 
 async function fetchJson(url) {
   const res = await fetch(url);
+  if (res.status === 401) throw new Error('Your session has expired. Please sign in again.');
   if (res.status === 503) throw new Error(VPN_ERROR_MESSAGE);
   if (!res.ok) throw new Error(`Failed to load ${url} (${res.status})`);
   return res.json();
@@ -20,10 +21,8 @@ async function fetchJson(url) {
  * Results are cached for the lifetime of the session — no re-fetching on form open.
  * All arrays are sorted alphabetically by name at load time.
  *
- * Wrap your app root with this provider:
- *   <FormDataProvider>
- *     <App />
- *   </FormDataProvider>
+ * Mount this provider inside the authenticated app shell so it only fetches
+ * protected data after the user has a valid session.
  */
 export function FormDataProvider({ children }) {
   const [people, setPeople] = useState([]);

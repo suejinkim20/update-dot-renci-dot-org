@@ -6,11 +6,6 @@
 export const personSchemas = {
   'person.add': {
     fields: {
-      submitterEmail: {
-        type: 'string',
-        required: true,
-        label: 'Submitter email',
-      },
       firstName: {
         type: 'string',
         required: true,
@@ -85,11 +80,6 @@ export const personSchemas = {
 
   'person.update': {
     fields: {
-      submitterEmail: {
-        type: 'string',
-        required: true,
-        label: 'Submitter email',
-      },
       slug: {
         type: 'string',
         required: true,
@@ -107,11 +97,6 @@ export const personSchemas = {
 
   'person.archive': {
     fields: {
-      submitterEmail: {
-        type: 'string',
-        required: true,
-        label: 'Submitter email',
-      },
       slug: {
         type: 'string',
         required: true,

@@ -1,9 +1,27 @@
 // frontend/src/pages/LoginPage.jsx
 
-import { Box, Button, Text, Stack, Divider, Container, Anchor } from '@mantine/core';import { useAuth } from '../context/AuthContext';
+import { Alert, Anchor, Box, Button, Container, Divider, Stack, Text } from '@mantine/core';
+import { IconAlertCircle } from '@tabler/icons-react';
+import { Navigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+const ERROR_MESSAGES = {
+  session_expired: 'Your session expired before sign-in completed. Please try again.',
+  signin_failed: 'Something went wrong during sign-in. Please try again.',
+  signin_unavailable: 'Sign-in is temporarily unavailable. Please try again later.',
+};
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { isAuthenticated, isLoading, login } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  if (!isLoading && isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  const returnTo = searchParams.get('returnTo') || '/';
+  const error = searchParams.get('error');
+  const errorMessage = error ? ERROR_MESSAGES[error] || 'Unable to sign you in.' : null;
 
   return (
     <Box
@@ -63,6 +81,12 @@ export default function LoginPage() {
 
             <Divider />
 
+            {errorMessage && (
+              <Alert icon={<IconAlertCircle size={16} />} color="red" title="Sign in failed">
+                {errorMessage}
+              </Alert>
+            )}
+
             {/* Description */}
             <Stack gap="xs">
               <Text fw={600} size="sm">
@@ -86,7 +110,8 @@ export default function LoginPage() {
             <Button
               fullWidth
               size="sm"
-              onClick={login}
+              onClick={() => login(returnTo)}
+              loading={isLoading}
               style={{ background: '#005b8e' }}
             >
               Sign in with your organization account

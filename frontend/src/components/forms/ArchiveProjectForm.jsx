@@ -5,7 +5,6 @@ import { useForm, Controller } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Stack, Text, Button, Alert, Box, Paper } from '@mantine/core';
 import { AutocompleteField, LongTextInput } from '../form-elements';
-import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import SlugConfirmation from '../form-blocks/SlugConfirmation';
 import ArchiveConfirmation from '../form-blocks/ArchiveConfirmation';
 import FormSuccessState from '../form-blocks/FormSuccessState';
@@ -26,7 +25,6 @@ export default function ArchiveProjectForm() {
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
-      submitterEmail: '',
       project: null,
       reason: '',
     },
@@ -41,7 +39,6 @@ export default function ArchiveProjectForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          submitterEmail: data.submitterEmail,
           slug:           data.project?.slug,
           name:           data.project?.name,
           reason:         data.reason,
@@ -136,8 +133,6 @@ export default function ArchiveProjectForm() {
             The implementing team will review this request before making any changes.
           </Text>
         </Paper>
-
-        <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
 
         <Box style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button type="submit" color="orange">Review &amp; confirm</Button>

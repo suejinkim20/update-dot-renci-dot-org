@@ -1,11 +1,10 @@
 // frontend/src/App.jsx
 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from 'react-oidc-context';
+import { Box, Loader, Stack, Text } from '@mantine/core';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthStateProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
-import AuthCallback from './pages/AuthCallback';
 import HomePage from './pages/HomePage';
 import PreviewPage from './pages/PreviewPage';
 import AddProjectPage from './pages/AddProjectPage';
@@ -15,39 +14,56 @@ import UpdatePersonPage from './pages/UpdatePersonPage';
 import ArchiveProjectPage from './pages/ArchiveProjectPage';
 import ArchivePersonPage from './pages/ArchivePersonPage';
 import { useAuth } from './context/AuthContext';
+import { FormDataProvider } from './context/FormDataContext';
 
-const authority = import.meta.env.VITE_AD_AUTHORITY;
-
-const oidcConfig = {
-  authority,
-  client_id: import.meta.env.VITE_AD_CLIENT_ID,
-  redirect_uri: `${window.location.origin}/auth/callback`,
-  scope: 'openid profile email',
-  metadata: {
-    issuer: authority,
-    authorization_endpoint: `${authority}/oauth2/authorize/`,
-    token_endpoint: `${authority}/oauth2/token/`,
-    jwks_uri: `${authority}/discovery/keys`,
-    userinfo_endpoint: `${authority}/userinfo`,
-    end_session_endpoint: `${authority}/oauth2/logout`,
-  },
-};
+function AuthSplash({ message }) {
+  return (
+    <Box
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f9f9f9',
+      }}
+    >
+      <Stack align="center" gap="sm">
+        <Loader color="#005b8e" />
+        <Text size="sm" c="gray.6">
+          {message}
+        </Text>
+      </Stack>
+    </Box>
+  );
+}
 
 function RequireAuth({ children }) {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return <AuthSplash message="Checking your session..." />;
+  }
+
+  if (!isAuthenticated) {
+    const returnTo = `${location.pathname}${location.search}${location.hash}`;
+    return <Navigate to={`/login?returnTo=${encodeURIComponent(returnTo)}`} replace />;
+  }
+
+  return children;
 }
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/auth/callback" element={<AuthCallback />} />
 
       <Route
         element={
           <RequireAuth>
-            <Layout />
+            <FormDataProvider>
+              <Layout />
+            </FormDataProvider>
           </RequireAuth>
         }
       >
@@ -69,12 +85,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider {...oidcConfig}>
-      <BrowserRouter>
-        <AuthStateProvider>
-          <AppRoutes />
-        </AuthStateProvider>
-      </BrowserRouter>
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthStateProvider>
+        <AppRoutes />
+      </AuthStateProvider>
+    </BrowserRouter>
   );
 }

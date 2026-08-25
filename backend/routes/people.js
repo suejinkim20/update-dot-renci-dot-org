@@ -54,8 +54,8 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ errors: result.errors });
   }
 
+  const submitterEmail = req.user.email;
   const {
-    submitterEmail,
     firstName,
     lastName,
     preferredName,
@@ -234,7 +234,8 @@ router.post('/update', async (req, res) => {
     return res.status(400).json({ errors: result.errors });
   }
 
-  const { submitterEmail, slug, name, changes } = req.body;
+  const submitterEmail = req.user.email;
+  const { slug, name, changes } = req.body;
   const displayName = name || slug;
 
   try {
@@ -303,7 +304,8 @@ router.post('/archive', async (req, res) => {
     return res.status(400).json({ errors: result.errors });
   }
 
-  const { submitterEmail, slug, name, effectiveDate, reason } = req.body;
+  const submitterEmail = req.user.email;
+  const { slug, name, effectiveDate, reason } = req.body;
   const displayName = name || slug;
 
   try {

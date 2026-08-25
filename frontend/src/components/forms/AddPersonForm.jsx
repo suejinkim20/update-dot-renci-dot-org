@@ -25,7 +25,6 @@ import TextInput from '../form-elements/TextInput';
 import RichTextInput from '../form-elements/RichTextInput';
 import TagsInput from '../form-elements/TagsInput';
 import EditableWebsiteList from '../form-blocks/EditableWebsiteList';
-import SubmitterEmailField from '../form-blocks/SubmitterEmailField';
 import FormSuccessState from '../form-blocks/FormSuccessState';
 import FormIntro from '../form-blocks/FormIntro';
 
@@ -49,7 +48,6 @@ export default function AddPersonForm() {
     reset,
   } = useForm({
     defaultValues: {
-      submitterEmail: '',
       firstName: '',
       lastName: '',
       preferredName: '',
@@ -379,8 +377,6 @@ export default function AddPersonForm() {
           </Paper>
 
           <Divider />
-
-          <SubmitterEmailField control={control} error={errors.submitterEmail?.message} />
 
           <Group justify="flex-end">
             <Button type="submit" loading={submitting} disabled={submitting}>
